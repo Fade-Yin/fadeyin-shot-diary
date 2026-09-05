@@ -295,7 +295,9 @@ async function splitVideo(event, options) {
   if (!fs.existsSync(videoPath) || !fs.existsSync(outputDir)) throw new Error('视频或导出文件夹不存在');
   const shots = Array.isArray(options.shots) ? options.shots : [];
   const base = path.basename(videoPath, path.extname(videoPath)).replace(/[<>:"/\\|?*]/g, '_');
-  const targetDir = path.join(outputDir, `${base}_镜头视频`);
+  let targetDir = path.join(outputDir, `${base}_镜头视频`);
+  let run = 2;
+  while (fs.existsSync(targetDir) && fs.readdirSync(targetDir).length) targetDir = path.join(outputDir, `${base}_镜头视频_${run++}`);
   fs.mkdirSync(targetDir, { recursive: true });
   for (let index = 0; index < shots.length; index += 1) {
     if (cancelled) throw new Error('__cancel__');
@@ -303,7 +305,7 @@ async function splitVideo(event, options) {
     const output = path.join(targetDir, `shot_${String(index + 1).padStart(3, '0')}.mp4`);
     sendProgress(index / shots.length * 100, `FFmpeg 正在精确导出镜头 ${index + 1}/${shots.length}…`);
     await run(mediaTool('ffmpeg'), [
-      '-y', '-hide_banner', '-nostdin', '-loglevel', 'error',
+      '-n', '-hide_banner', '-nostdin', '-loglevel', 'error',
       '-ss', Number(shot.start).toFixed(6), '-to', Number(shot.end).toFixed(6), '-i', videoPath,
       '-map', '0:v:0', '-map', '0:a?', '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '18',
       '-c:a', 'aac', '-b:a', '192k', '-movflags', '+faststart', '-avoid_negative_ts', 'make_zero', output
