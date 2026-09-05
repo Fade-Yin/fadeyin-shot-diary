@@ -331,7 +331,7 @@ function createWindow() {
   });
   const page = app.isPackaged
     ? path.join(process.resourcesPath, 'ui', 'FadeYin拉片日记.html')
-    : path.join(__dirname, '..', 'outputs', 'FadeYin拉片日记.html');
+    : path.join(__dirname, 'ui', 'FadeYin拉片日记.html');
   mainWindow.loadFile(page);
 }
 

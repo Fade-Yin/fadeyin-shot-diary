@@ -39,7 +39,7 @@
     ],
     "extraResources": [
       {
-        "from": "../outputs/FadeYin拉片日记.html",
+        "from": "ui/FadeYin拉片日记.html",
         "to": "ui/FadeYin拉片日记.html"
       }
     ],
