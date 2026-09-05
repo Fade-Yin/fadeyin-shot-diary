@@ -1,0 +1,17 @@
+node_modules/
+dist*/
+work/
+.codex/
+.agents/
+.env
+.env.*
+*.log
+*.mp4
+*.mov
+*.mkv
+*.webm
+*.exe
+*.dmg
+*.zip
+.DS_Store
+Thumbs.db

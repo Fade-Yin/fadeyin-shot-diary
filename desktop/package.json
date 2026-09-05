@@ -1,0 +1,75 @@
+{
+  "name": "fadeyin-shot-diary",
+  "version": "0.6.1",
+  "description": "FadeYin 拉片日记 - FFmpeg 逐帧镜头分析工具",
+  "main": "main.js",
+  "author": "Danny",
+  "license": "UNLICENSED",
+  "scripts": {
+    "start": "electron .",
+    "check": "node --check main.js && node --check preload.js && node --check ai-api.cjs",
+    "build:win": "electron-builder --win portable",
+    "build:win-installer": "electron-builder --win nsis",
+    "build:mac": "electron-builder --mac dmg zip",
+    "build:mac:x64": "electron-builder --mac dmg zip --x64",
+    "build:mac:arm64": "electron-builder --mac dmg zip --arm64"
+  },
+  "devDependencies": {
+    "electron": "^37.2.6",
+    "electron-builder": "^26.0.12",
+    "playwright-core": "^1.62.1"
+  },
+  "build": {
+    "appId": "com.fadeyin.shotdiary",
+    "productName": "FadeYin拉片日记",
+    "asar": true,
+    "asarUnpack": [
+      "node_modules/ffmpeg-static/**",
+      "node_modules/ffprobe-static/**"
+    ],
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "ai-api.cjs",
+      "assets/fadeyin-icon.png",
+      "assets/fadeyin-icon.ico"
+    ],
+    "extraResources": [
+      {
+        "from": "../outputs/FadeYin拉片日记.html",
+        "to": "ui/FadeYin拉片日记.html"
+      }
+    ],
+    "win": {
+      "icon": "assets/fadeyin-icon.ico",
+      "target": [
+        "portable"
+      ],
+      "artifactName": "FadeYin拉片日记-Windows便携版-${version}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true
+    },
+    "mac": {
+      "icon": "assets/fadeyin-icon.icns",
+      "target": [
+        "dmg",
+        "zip"
+      ],
+      "category": "public.app-category.video",
+      "artifactName": "FadeYin拉片日记-macOS-${version}.${ext}"
+    },
+    "dmg": {
+      "title": "FadeYin 拉片日记"
+    }
+  },
+  "dependencies": {
+    "ffmpeg-static": "^5.3.0",
+    "ffprobe-static": "^3.1.0"
+  }
+}
