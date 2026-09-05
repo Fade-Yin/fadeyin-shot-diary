@@ -101,7 +101,8 @@ function localMaxima(frames, sensitivity, minGap, duration, fps = 25) {
     const history = frames.slice(Math.max(0, i - 18), i).map(item => item.score).sort((a, b) => a - b);
     const median = history.length ? history[Math.floor(history.length / 2)] : 0;
     const adaptive = Math.max(soft, median * 5 + 0.012);
-    if (localPeak && (current.score >= hard || current.score >= adaptive)) candidates.push(current.time);
+    // A hard cut is valid even beside a stronger cut (including one-frame shots).
+    if (current.score >= hard || current.frameDifference >= hard || (localPeak && current.score >= adaptive)) candidates.push(current.time);
   }
   const cuts = [0];
   for (const time of candidates) {
@@ -149,6 +150,8 @@ async function scanScenes(videoPath, meta, sensitivity, minGap) {
       }
       const score = line.match(/lavfi\.scene_score=([\d.]+)/);
       if (score && current) current.score = Number(score[1]);
+      const frameDifference = line.match(/lavfi\.signalstats\.YDIF=([\d.]+)/);
+      if (frameDifference && current) current.frameDifference = Number(frameDifference[1]) / 255;
       const brightness = line.match(/lavfi\.signalstats\.YAVG=([\d.]+)/);
       if (brightness && current) current.brightness = Number(brightness[1]) / 255;
       const saturation = line.match(/lavfi\.signalstats\.SATAVG=([\d.]+)/);
@@ -296,8 +299,8 @@ async function splitVideo(event, options) {
   const shots = Array.isArray(options.shots) ? options.shots : [];
   const base = path.basename(videoPath, path.extname(videoPath)).replace(/[<>:"/\\|?*]/g, '_');
   let targetDir = path.join(outputDir, `${base}_镜头视频`);
-  let run = 2;
-  while (fs.existsSync(targetDir) && fs.readdirSync(targetDir).length) targetDir = path.join(outputDir, `${base}_镜头视频_${run++}`);
+  let exportNumber = 2;
+  while (fs.existsSync(targetDir)) targetDir = path.join(outputDir, `${base}_镜头视频_${exportNumber++}`);
   fs.mkdirSync(targetDir, { recursive: true });
   for (let index = 0; index < shots.length; index += 1) {
     if (cancelled) throw new Error('__cancel__');
