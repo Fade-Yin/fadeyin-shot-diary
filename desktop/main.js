@@ -3,12 +3,27 @@ const { spawn } = require('node:child_process');
 const fs = require('node:fs');
 const path = require('node:path');
 const { pathToFileURL } = require('node:url');
+const { writeVideoReport } = require('./report-stream.cjs');
 const { requestAI } = require('./ai-api.cjs');
 const aiRequests = new Map();
 
 let mainWindow = null;
 let activeProcesses = new Set();
 let cancelled = false;
+let trustedPage = '';
+let mediaJob = false;
+const exportFolders = new Set();
+const revealedPaths = new Set();
+function trusted(event) {
+  if(!mainWindow || event.sender !== mainWindow.webContents || event.senderFrame !== mainWindow.webContents.mainFrame || event.senderFrame.url !== trustedPage) throw new Error('拒绝不受信任的请求');
+}
+function videoFile(value) {
+  if(typeof value !== 'string' || !path.isAbsolute(value) || !/\.(mp4|mov|mkv|webm|avi|m4v|mpeg|mpg|mts|m2ts)$/i.test(value)) throw new Error('请选择本地视频文件');
+  const target=fs.realpathSync(value);if(!fs.statSync(target).isFile())throw new Error('视频文件不存在');return target;
+}
+function handle(name, fn, job=false) {
+  ipcMain.handle(name,async(event,...args)=>{trusted(event);if(job&&mediaJob)throw new Error('请等待当前任务完成');if(job){mediaJob=true;cancelled=false}try{return await fn(event,...args)}finally{if(job)mediaJob=false}});
+}
 
 function existing(candidates) {
   return candidates.find(candidate => candidate && fs.existsSync(candidate));
@@ -45,11 +60,12 @@ function run(command, args, options = {}) {
     const stdout = [];
     const stderr = [];
     child.stdout.on('data', chunk => {
-      stdout.push(chunk);
+      if(!options.onStdout) stdout.push(chunk);
       options.onStdout?.(chunk);
     });
     child.stderr.on('data', chunk => {
       stderr.push(chunk);
+      while(stderr.length>1 && stderr.reduce((n,b)=>n+b.length,0)>65536)stderr.shift();
       options.onStderr?.(chunk);
     });
     child.on('error', error => {
@@ -264,7 +280,8 @@ async function mapLimit(values, limit, worker) {
 
 async function analyzeVideo(event, options) {
   cancelled = false;
-  const videoPath = path.resolve(options.path);
+  const videoPath = videoFile(options?.path);
+  if(!Number.isFinite(Number(options.sensitivity))||Number(options.sensitivity)<15||Number(options.sensitivity)>65)throw new Error('检测灵敏度无效');
   if (!fs.existsSync(videoPath)) throw new Error('视频文件不存在');
   sendProgress(2, '正在读取视频信息…');
   const meta = await probeVideo(videoPath);
@@ -293,10 +310,13 @@ async function analyzeVideo(event, options) {
 
 async function splitVideo(event, options) {
   cancelled = false;
-  const videoPath = path.resolve(options.path);
-  const outputDir = path.resolve(options.outputDir);
+  const videoPath = videoFile(options?.path);
+  const outputDir = fs.realpathSync(options.outputDir);
+  if(!exportFolders.has(outputDir))throw new Error('请重新选择导出文件夹');
   if (!fs.existsSync(videoPath) || !fs.existsSync(outputDir)) throw new Error('视频或导出文件夹不存在');
   const shots = Array.isArray(options.shots) ? options.shots : [];
+  const meta=await probeVideo(videoPath);
+  if(!shots.length||shots.length>100000||shots.some((s,i)=>!Number.isFinite(s.start)||!Number.isFinite(s.end)||s.start<0||s.end<=s.start||s.end>meta.duration+.001||(i>0&&s.start<shots[i-1].end-.001)))throw new Error('镜头时间范围无效');
   const base = path.basename(videoPath, path.extname(videoPath)).replace(/[<>:"/\\|?*]/g, '_');
   let targetDir = path.join(outputDir, `${base}_镜头视频`);
   let exportNumber = 2;
@@ -315,6 +335,7 @@ async function splitVideo(event, options) {
     ]);
   }
   sendProgress(100, '镜头视频导出完成');
+  revealedPaths.add(targetDir);
   return { outputDir: targetDir };
 }
 
@@ -337,15 +358,19 @@ function createWindow() {
   const page = app.isPackaged
     ? path.join(process.resourcesPath, 'ui', 'FadeYin拉片日记.html')
     : path.join(__dirname, 'ui', 'FadeYin拉片日记.html');
+  trustedPage=pathToFileURL(page).href;
+  mainWindow.webContents.on('will-navigate',event=>event.preventDefault());
+  mainWindow.webContents.setWindowOpenHandler(({url})=>{if(url==='https://docs.feishu.cn/sheets')shell.openExternal(url);return {action:'deny'}});
+  mainWindow.webContents.session.setPermissionRequestHandler((_wc,_permission,callback)=>callback(false));
   mainWindow.loadFile(page);
 }
 
-ipcMain.handle('fadeyin:analyze', analyzeVideo);
-ipcMain.handle('fadeyin:ai-request', async (event, options) => {
+handle('fadeyin:analyze', analyzeVideo, true);
+handle('fadeyin:ai-request', async (event, options) => {
   throw new Error('功能未上线，敬请稍后');
 });
-ipcMain.on('fadeyin:ai-cancel', event => aiRequests.get(event.sender.id)?.abort());
-ipcMain.handle('fadeyin:describe-video', async (_event, value) => {
+ipcMain.on('fadeyin:ai-cancel', event => {try{trusted(event);aiRequests.get(event.sender.id)?.abort()}catch{}});
+handle('fadeyin:describe-video', async (_event, value) => {
   if (typeof value !== 'string' || !path.isAbsolute(value) || !/\.(mp4|mov|mkv|webm|avi|m4v|mpeg|mpg|mts|m2ts)$/i.test(value)) throw new Error('请选择本地视频文件');
   const videoPath = path.resolve(value);
   const stat = await fs.promises.stat(videoPath);
@@ -353,14 +378,25 @@ ipcMain.handle('fadeyin:describe-video', async (_event, value) => {
   cancelled = false;
   const meta = await probeVideo(videoPath);
   return { ...meta, path: videoPath, url: pathToFileURL(videoPath).href, name: path.basename(videoPath), size: stat.size, lastModified: Math.trunc(stat.mtimeMs) };
-});
-ipcMain.handle('fadeyin:choose-export-folder', async () => {
+}, true);
+handle('fadeyin:choose-export-folder', async () => {
   const result = await dialog.showOpenDialog(mainWindow, { properties: ['openDirectory', 'createDirectory'] });
-  return result.canceled ? null : result.filePaths[0];
+  if(result.canceled)return null;const folder=fs.realpathSync(result.filePaths[0]);exportFolders.add(folder);return folder;
 });
-ipcMain.handle('fadeyin:split-video', splitVideo);
-ipcMain.handle('fadeyin:reveal-path', (_event, target) => shell.showItemInFolder(path.resolve(target)));
-ipcMain.on('fadeyin:cancel', () => {
+handle('fadeyin:split-video', splitVideo, true);
+handle('fadeyin:save-report', async(_event,options)=>{
+  const videoPath=videoFile(options?.path);
+  if(typeof options.template!=='string'||options.template.length>128*1024*1024)throw new Error('报告内容过大，请按场导出');
+  const result=await dialog.showSaveDialog(mainWindow,{defaultPath:path.basename(String(options.name||'拉片日记.html')),filters:[{name:'HTML 报告',extensions:['html']}]});
+  if(result.canceled)return null;
+  const outputPath=result.filePath;
+  if(fs.existsSync(outputPath))throw new Error('该文件已存在，请使用新的文件名，原文件不会覆盖');
+  await writeVideoReport({videoPath,outputPath,template:options.template,marker:'__FADEYIN_VIDEO_PAYLOAD__',isCancelled:()=>cancelled,onProgress:p=>sendProgress(8+p*90,'正在流式写出报告…')});
+  revealedPaths.add(outputPath);return {path:outputPath};
+},true);
+handle('fadeyin:reveal-path', (_event, target) => {const resolved=path.resolve(target);if(!revealedPaths.has(resolved))throw new Error('只能打开本次导出的文件');shell.showItemInFolder(resolved)});
+ipcMain.on('fadeyin:cancel', event => {
+  try{trusted(event)}catch{return}
   cancelled = true;
   for (const child of activeProcesses) child.kill();
 });

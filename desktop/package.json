@@ -1,6 +1,6 @@
 {
   "name": "fadeyin-shot-diary",
-  "version": "0.6.2",
+  "version": "0.6.7",
   "description": "FadeYin 拉片日记 - FFmpeg 逐帧镜头分析工具",
   "main": "main.js",
   "author": "Danny",
@@ -34,6 +34,7 @@
       "main.js",
       "preload.js",
       "ai-api.cjs",
+      "report-stream.cjs",
       "assets/fadeyin-icon.png",
       "assets/fadeyin-icon.ico"
     ],

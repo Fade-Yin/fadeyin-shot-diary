@@ -9,6 +9,7 @@ contextBridge.exposeInMainWorld('fadeYinDesktop', {
   analyzeVideo: options => ipcRenderer.invoke('fadeyin:analyze', options),
   chooseExportFolder: () => ipcRenderer.invoke('fadeyin:choose-export-folder'),
   splitVideo: options => ipcRenderer.invoke('fadeyin:split-video', options),
+  saveReport: options => ipcRenderer.invoke('fadeyin:save-report', options),
   revealPath: path => ipcRenderer.invoke('fadeyin:reveal-path', path),
   cancel: () => ipcRenderer.send('fadeyin:cancel'),
   onProgress: callback => {
