@@ -63,7 +63,7 @@
         "zip"
       ],
       "category": "public.app-category.video",
-      "artifactName": "FadeYin拉片日记-macOS-${version}.${ext}"
+      "artifactName": "FadeYin-Shot-Diary-macOS-${arch}-${version}.${ext}"
     },
     "dmg": {
       "title": "FadeYin 拉片日记"

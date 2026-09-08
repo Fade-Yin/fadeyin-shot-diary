@@ -1,0 +1,48 @@
+name: Build Mac release
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  mac:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: macos-15
+            arch: arm64
+          - runner: macos-15-intel
+            arch: x64
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: desktop
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci
+      - name: Verify native media tools
+        run: |
+          node -e "const cp=require('child_process');for(const p of [require('ffmpeg-static'),require('ffprobe-static').path]){cp.execFileSync('chmod',['+x',p]);console.log(cp.execFileSync('file',[p]).toString());console.log(cp.execFileSync(p,['-version']).toString().split('\n')[0])}"
+          npm run check
+      - name: Build DMG and ZIP
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+        run: npx electron-builder --mac dmg zip --${{ matrix.arch }} --publish never
+      - name: Verify bundle and bundled FFmpeg
+        env:
+          EXPECTED_ARCH: ${{ matrix.arch }}
+        run: |
+          node scripts/check-mac.cjs
+          shasum -a 256 dist/*.dmg dist/*.zip > dist/SHA256-${{ matrix.arch }}.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: FadeYin-macOS-${{ matrix.arch }}-0.6.7
+          path: |
+            desktop/dist/*.dmg
+            desktop/dist/*.zip
+            desktop/dist/SHA256-*.txt
+          retention-days: 7

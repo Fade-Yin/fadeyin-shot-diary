@@ -1,0 +1,20 @@
+const fs=require('fs'),path=require('path'),cp=require('child_process'),assert=require('assert');
+const arch=process.env.EXPECTED_ARCH;
+const dir=arch==='arm64'?'mac-arm64':'mac';
+const bundle=path.resolve('dist',dir,'FadeYin拉片日记.app','Contents');
+const res=path.join(bundle,'Resources');
+assert(fs.existsSync(path.join(bundle,'Info.plist')));
+assert(fs.existsSync(path.join(res,'ui','FadeYin拉片日记.html')));
+const bin=path.join(bundle,'MacOS','FadeYin拉片日记');
+const wanted=arch==='arm64'?'arm64':'x86_64';
+assert(cp.execFileSync('lipo',['-archs',bin]).toString().includes(wanted));
+const base=path.join(res,'app.asar.unpacked','node_modules');
+const ff=path.join(base,'ffmpeg-static','ffmpeg');
+const probe=path.join(base,'ffprobe-static','bin','darwin',arch,'ffprobe');
+for(const p of [ff,probe]){assert(cp.execFileSync('lipo',['-archs',p]).toString().includes(wanted));cp.execFileSync(p,['-version']);const libs=cp.execFileSync('otool',['-L',p]).toString();assert(!libs.includes('/opt/homebrew/')&&!libs.includes('/usr/local/'),'external Homebrew dependency');}
+const tmp=fs.mkdtempSync(path.join(require('os').tmpdir(),'fadeyin-mac-'));
+const sample=path.join(tmp,'sample.mp4');
+cp.execFileSync(ff,['-f','lavfi','-i','color=c=red:s=160x90:r=25:d=1','-c:v','libx264',sample]);
+const info=JSON.parse(cp.execFileSync(probe,['-v','error','-show_streams','-of','json',sample]));
+assert(info.streams[0].width===160&&info.streams[0].height===90);
+console.log('PASS Mac app structure, native architecture, bundled FFmpeg encode and FFprobe decode metadata');
