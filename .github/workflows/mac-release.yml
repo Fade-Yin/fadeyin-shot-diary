@@ -24,6 +24,8 @@ jobs:
         with:
           node-version: 22
       - run: npm ci
+      - name: Install native FFprobe from pinned upstream release
+        run: curl --fail --location --retry 3 https://github.com/eugeneware/ffmpeg-static/releases/download/b6.0/ffprobe-darwin-${{ matrix.arch }} -o node_modules/ffprobe-static/bin/darwin/${{ matrix.arch }}/ffprobe
       - name: Verify native media tools
         run: |
           node -e "const cp=require('child_process');for(const p of [require('ffmpeg-static'),require('ffprobe-static').path]){cp.execFileSync('chmod',['+x',p]);console.log(cp.execFileSync('file',[p]).toString());console.log(cp.execFileSync(p,['-version']).toString().split('\n')[0])}"
