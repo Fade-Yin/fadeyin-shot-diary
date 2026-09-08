@@ -1,0 +1,29 @@
+name: Audit published Mac signatures
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  audit:
+    strategy:
+      matrix:
+        include:
+          - runner: macos-15
+            arch: arm64
+          - runner: macos-15-intel
+            arch: x64
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 10
+    steps:
+      - name: Download exact public package
+        run: |
+          curl --fail --location --retry 2 'https://github.com/Fade-Yin/fadeyin-downloads/releases/download/v0.6.7/FadeYin-Shot-Diary-macOS-${{ matrix.arch }}-0.6.7.zip' -o app.zip
+          shasum -a 256 app.zip
+          ditto -x -k app.zip unpacked
+      - name: Inspect signature and Gatekeeper without launching
+        run: |
+          APP="$(find unpacked -maxdepth 2 -name '*.app' -print -quit)"
+          test -n "$APP"
+          codesign -dvvv "$APP" 2>&1 || true
+          codesign --verify --deep --strict --verbose=4 "$APP" 2>&1 || true
+          spctl --assess --type execute --verbose=4 "$APP" 2>&1 || true
