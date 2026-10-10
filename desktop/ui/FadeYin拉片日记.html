@@ -755,7 +755,7 @@ function imageIdentity(value){if(!imageIds.has(value))imageIds.set(value,++ident
 function metricIdentity(value){if(!metricIds.has(value))metricIds.set(value,++identitySerial);return metricIds.get(value)}
 function renderPager(mode,total,size,page){
  const id=mode+'Pager';let nav=document.getElementById(id);
- if(!nav){nav=document.createElement('nav');nav.id=id;nav.className='resultPager';nav.setAttribute('aria-label',mode==='lap'?'拉片表分页':'镜头分页');const target=mode==='lap'?$('#logPanel .columnHelp'):$('#results .resultsHead');target.after(nav)}
+ if(!nav){nav=document.createElement('nav');nav.id=id;nav.className='resultPager';nav.setAttribute('aria-label',mode==='lap'?'拉片表分页':'镜头分页');const target=mode==='lap'?$('#logPanel .columnHelp'):$('.resultsHead');if(target)target.after(nav);else (mode==='lap'?$('#logPanel'):$('#results')).prepend(nav)}
  nav.replaceChildren();const count=Math.max(1,Math.ceil(total/size));
  const info=document.createElement('span');info.textContent=`第 ${page+1} / ${count} 页 · 共 ${total} 个镜头`;
  for(const [text,delta] of [['上一页',-1],['下一页',1]]){const button=document.createElement('button');button.className='btn';button.textContent=text;button.disabled=page+delta<0||page+delta>=count;button.onclick=()=>{if(busy)return;if(mode==='lap'){lapPage+=delta;renderLapTable()}else{analysisPage+=delta;renderAnalysisRows()}document.getElementById(id).scrollIntoView({block:'nearest'})};nav.append(button)}nav.prepend(info);nav.hidden=total<=size;
