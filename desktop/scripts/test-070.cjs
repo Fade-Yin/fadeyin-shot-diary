@@ -1,0 +1,48 @@
+const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm'),assert=require('node:assert/strict'),os=require('node:os');
+const root=path.resolve(__dirname,'..'),model=require('../ui/analysis-model.js');
+const shots=[{start:0,end:1},{start:1,end:4},{start:4,end:6}];
+assert.equal(model.validateSequence(0,1,3,[]),'');
+assert.ok(model.validateSequence(0,2,3,[{id:'x',startShot:1,endShot:3}]));
+assert.equal(model.validateSequence(1,3,3,[{id:'x',startShot:1,endShot:3}],'x'),'');
+for(const pair of [[-1,1],[0,0],[0,4],[.5,2]])assert.ok(model.validateSequence(...pair,3,[]));
+assert.equal(model.contiguousSelection(new Set([0,2]),3),null);
+assert.deepEqual(model.contiguousSelection(new Set([2,1]),3),{start:1,end:3});
+const notes={0:{shotSize:' 特写 '},1:{shotSize:'全景'},2:{shotSize:''}};
+const counts=model.distribution(shots,notes,'shotSize');assert.equal(counts.filled,2);assert.equal(counts.groups.length,3);assert.ok(counts.groups.every(x=>Math.abs(x.percent-100/3)<1e-8));
+const durations=model.distribution(shots,notes,'shotSize','duration');assert.equal(durations.groups[0].label,'全景');assert.equal(durations.groups[0].percent,50);
+assert.equal(model.distribution([],{},'angle').total,0);
+assert.equal(model.distribution(shots,{0:{angle:'__proto__'}},'angle').groups.length,2);
+for(const file of ['analysis-model.js','sequence-analysis.js'])new vm.Script(fs.readFileSync(path.join(root,'ui',file),'utf8'));
+const html=fs.readFileSync(path.join(root,'ui/FadeYin拉片日记.html'),'utf8');
+for(const m of html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g))if(m[1])new vm.Script(m[1]);
+assert.ok(html.includes('<title>片拉拉</title>'));assert.ok(html.includes('<h2>序列分析</h2>'));assert.ok(!html.includes('分场'));
+const localRequire=require('node:module').createRequire(path.join(root,'main.js')),handlers={};
+const electron={app:{isPackaged:false,whenReady:()=>({then(){}}),on(){}},ipcMain:{handle(n,f){handlers[n]=f},on(){}},BrowserWindow:{},dialog:{},shell:{}};
+const sandbox={require:n=>n==='electron'?electron:localRequire(n),process:{...process,resourcesPath:root},Buffer,console,__dirname:root,setTimeout,clearTimeout};
+vm.createContext(sandbox);vm.runInContext(fs.readFileSync(path.join(root,'main.js'),'utf8'),sandbox);
+(async()=>{
+ await assert.rejects(handlers['fadeyin:export-stills']({},{}),/不受信任/);
+ const dir=fs.mkdtempSync(path.join(os.tmpdir(),'pianlala-070-'));sandbox.testDir=dir;
+ const run=vm.runInContext('run',sandbox),ff=vm.runInContext("mediaTool('ffmpeg')",sandbox);
+ const source=path.join(dir,'colors.mp4');
+ const inputs=['red','yellow','green','cyan','blue','magenta'].flatMap(c=>['-f','lavfi','-i',`color=c=${c}:s=160x90:r=12:d=0.5`]);
+ await run(ff,['-hide_banner','-loglevel','error',...inputs,'-filter_complex','[0:v][1:v][2:v][3:v][4:v][5:v]concat=n=6:v=1:a=0[out]','-map','[out]','-c:v','libx264','-pix_fmt','yuv420p',source]);
+ sandbox.options={path:source,outputDir:dir,shots:[{start:0,end:1},{start:1,end:2},{start:2,end:3}],position:'start'};
+ await assert.rejects(vm.runInContext('exportStills(null,options)',sandbox),/重新选择/);
+ vm.runInContext('exportFolders.add(testDir)',sandbox);
+ const first=await vm.runInContext('exportStills(null,options)',sandbox);sandbox.options.position='middle';
+ const second=await vm.runInContext('exportStills(null,options)',sandbox);assert.notEqual(first.outputDir,second.outputDir);
+ const colors=[];
+ for(const [result,position] of [[first,'start'],[second,'middle']])for(let i=0;i<3;i++){
+   const file=path.join(result.outputDir,`shot_${String(i+1).padStart(4,'0')}_${position}.png`),png=fs.readFileSync(file);
+   assert.equal(png.readUInt32BE(16),160);assert.equal(png.readUInt32BE(20),90);
+   const decoded=await run(ff,['-v','error','-i',file,'-vf','scale=1:1','-f','rawvideo','-pix_fmt','rgb24','pipe:1']);colors.push([...decoded.stdout]);
+ }
+ assert.ok(colors[0][0]>200&&colors[0][1]<30);assert.ok(colors[1][1]>80&&colors[1][0]<30);assert.ok(colors[2][2]>200&&colors[2][0]<30);
+ assert.ok(colors[3][0]>200&&colors[3][1]>200);assert.ok(colors[4][1]>200&&colors[4][2]>200);assert.ok(colors[5][0]>200&&colors[5][2]>200);
+ const existing=fs.readdirSync(dir);vm.runInContext('cancelled=true',sandbox);
+ await assert.rejects(vm.runInContext('exportStills(null,options)',sandbox),/__cancel__/);assert.deepEqual(fs.readdirSync(dir),existing);vm.runInContext('cancelled=false',sandbox);
+ sandbox.options.position='bad';await assert.rejects(vm.runInContext('exportStills(null,options)',sandbox),/起始帧/);
+ console.log('PASS 0.7: sequence range/overlap/selection; count and duration distributions; HTML/JS syntax; IPC guard; six real PNGs, original dimensions and correct start/middle colors; unique directories; cancellation cleanup.');
+ console.log('Fixtures:',dir);
+})().catch(e=>{console.error(e);process.exitCode=1});

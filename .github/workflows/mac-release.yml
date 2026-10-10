@@ -42,7 +42,7 @@ jobs:
           shasum -a 256 dist/*.dmg dist/*.zip > dist/SHA256-${{ matrix.arch }}.txt
       - uses: actions/upload-artifact@v4
         with:
-          name: FadeYin-macOS-${{ matrix.arch }}-0.6.7
+          name: Pianlala-macOS-${{ matrix.arch }}
           path: |
             desktop/dist/*.dmg
             desktop/dist/*.zip

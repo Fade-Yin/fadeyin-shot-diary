@@ -1,9 +1,9 @@
 {
   "name": "fadeyin-shot-diary",
-  "version": "0.6.7",
-  "description": "FadeYin 拉片日记 - FFmpeg 逐帧镜头分析工具",
+  "version": "0.7.30",
+  "description": "片拉拉 - 镜头拆解与序列拉片分析",
   "main": "main.js",
-  "author": "Danny",
+  "author": "Fadeyin",
   "license": "UNLICENSED",
   "scripts": {
     "start": "electron .",
@@ -21,7 +21,7 @@
   },
   "build": {
     "appId": "com.fadeyin.shotdiary",
-    "productName": "FadeYin拉片日记",
+    "productName": "片拉拉",
     "asar": true,
     "asarUnpack": [
       "node_modules/ffmpeg-static/**",
@@ -40,8 +40,14 @@
     ],
     "extraResources": [
       {
-        "from": "ui/FadeYin拉片日记.html",
-        "to": "ui/FadeYin拉片日记.html"
+        "from": "ui",
+        "to": "ui",
+        "filter": [
+          "*.html",
+          "*.js",
+          "*.css",
+          "*.png"
+        ]
       }
     ],
     "win": {
@@ -49,7 +55,7 @@
       "target": [
         "portable"
       ],
-      "artifactName": "FadeYin拉片日记-Windows便携版-${version}.${ext}"
+      "artifactName": "Pianlala-Windows-Portable-${version}.${ext}"
     },
     "nsis": {
       "oneClick": false,
@@ -63,10 +69,10 @@
         "zip"
       ],
       "category": "public.app-category.video",
-      "artifactName": "FadeYin-Shot-Diary-macOS-${arch}-${version}.${ext}"
+      "artifactName": "Pianlala-macOS-${arch}-${version}.${ext}"
     },
     "dmg": {
-      "title": "FadeYin 拉片日记"
+      "title": "片拉拉"
     }
   },
   "dependencies": {

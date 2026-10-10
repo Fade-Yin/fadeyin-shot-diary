@@ -1,11 +1,12 @@
 const fs=require('fs'),path=require('path'),cp=require('child_process'),assert=require('assert');
 const arch=process.env.EXPECTED_ARCH;
 const dir=arch==='arm64'?'mac-arm64':'mac';
-const bundle=path.resolve('dist',dir,'FadeYin拉片日记.app','Contents');
+const bundle=path.resolve('dist',dir,'片拉拉.app','Contents');
 const res=path.join(bundle,'Resources');
 assert(fs.existsSync(path.join(bundle,'Info.plist')));
 assert(fs.existsSync(path.join(res,'ui','FadeYin拉片日记.html')));
-const bin=path.join(bundle,'MacOS','FadeYin拉片日记');
+for(const file of ['analysis-model.js','sequence-analysis.js','sequence-analysis.css','workbench.js','workbench.css','track-mode.js','project-library.js','layout-presets.js','playback-tools.js'])assert(fs.existsSync(path.join(res,'ui',file)),file+' missing');
+const bin=path.join(bundle,'MacOS','片拉拉');
 const wanted=arch==='arm64'?'arm64':'x86_64';
 assert(cp.execFileSync('lipo',['-archs',bin]).toString().includes(wanted));
 const base=path.join(res,'app.asar.unpacked','node_modules');

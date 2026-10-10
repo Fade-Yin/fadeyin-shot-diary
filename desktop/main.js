@@ -1,4 +1,4 @@
-const { app, BrowserWindow, dialog, ipcMain, shell } = require('electron');
+const { app, BrowserWindow, dialog, ipcMain, shell, Tray, Menu } = require('electron');
 const { spawn } = require('node:child_process');
 const fs = require('node:fs');
 const path = require('node:path');
@@ -8,6 +8,22 @@ const { requestAI } = require('./ai-api.cjs');
 const aiRequests = new Map();
 
 let mainWindow = null;
+let tray = null, quitting = false, closePromptPending = false;
+function restoreWindow() { if(mainWindow&&!mainWindow.isDestroyed()){mainWindow.show();if(mainWindow.isMinimized())mainWindow.restore();mainWindow.focus()} }
+function requestWindowClose() {
+  if(!mainWindow||mainWindow.isDestroyed())return;
+  restoreWindow();
+  if(!closePromptPending){closePromptPending=true;mainWindow.webContents.send('fadeyin:close-requested')}
+}
+function minimizeToTray() {
+  if(!tray){
+    tray=new Tray(path.join(__dirname,'assets','fadeyin-icon.ico'));
+    tray.setToolTip('片拉拉');
+    tray.setContextMenu(Menu.buildFromTemplate([{label:'打开片拉拉',click:restoreWindow},{type:'separator'},{label:'退出…',click:requestWindowClose}]));
+    tray.on('click',restoreWindow);tray.on('double-click',restoreWindow);
+  }
+  mainWindow.hide();
+}
 let activeProcesses = new Set();
 let cancelled = false;
 let trustedPage = '';
@@ -339,6 +355,39 @@ async function splitVideo(event, options) {
   return { outputDir: targetDir };
 }
 
+async function exportStills(_event, options) {
+  const videoPath = videoFile(options?.path);
+  const outputDir = fs.realpathSync(options.outputDir);
+  if (!exportFolders.has(outputDir)) throw new Error('请重新选择导出文件夹');
+  if (!['start', 'middle'].includes(options.position)) throw new Error('请选择起始帧或中间帧');
+  const ranges = options.shots;
+  const meta = await probeVideo(videoPath);
+  if (!Array.isArray(ranges) || !ranges.length || ranges.length > 100000 || ranges.some((s,i) => !Number.isFinite(s.start) || !Number.isFinite(s.end) || s.start < 0 || s.end <= s.start || s.end > meta.duration + .001 || (i && s.start < ranges[i-1].end - .001))) throw new Error('镜头时间范围无效');
+  const base = path.basename(videoPath, path.extname(videoPath)).replace(/[<>:"/\\|?*]/g, '_').slice(0,80);
+  // mkdtemp atomically reserves a new directory; never reuse or overwrite exports.
+  const targetDir = fs.mkdtempSync(path.join(outputDir, `${base}_静帧_`));
+  const created = [];
+  try {
+    for (let i=0;i<ranges.length;i++) {
+      if(cancelled) throw new Error('__cancel__');
+      const s=ranges[i], time=options.position==='start'?s.start:(s.start+s.end)/2;
+      const output=path.join(targetDir, `shot_${String(i+1).padStart(4,'0')}_${options.position}.png`);
+      created.push(output);
+      sendProgress(i/ranges.length*100, `原尺寸 PNG · ${i+1}/${ranges.length}`);
+      await run(mediaTool('ffmpeg'), ['-n','-hide_banner','-nostdin','-loglevel','error','-ss',time.toFixed(6),'-i',videoPath,'-map','0:v:0','-frames:v','1','-an',output]);
+      if(!fs.existsSync(output)||!fs.statSync(output).size) throw new Error(`镜头 ${i+1} 未能读取画面`);
+    }
+    revealedPaths.add(targetDir);
+    sendProgress(100,'静帧导出完成');
+    return {outputDir:targetDir,count:ranges.length};
+  } catch(error) {
+    // Only files made by this operation are removed; parent/user files stay intact.
+    for(const output of created) {try{fs.unlinkSync(output)}catch{}}
+    try{fs.rmdirSync(targetDir)}catch{}
+    throw error;
+  }
+}
+
 function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1440,
@@ -346,7 +395,8 @@ function createWindow() {
     minWidth: 980,
     minHeight: 680,
     backgroundColor: '#17181b',
-    title: 'FadeYin 拉片日记',
+    title: '片拉拉',
+    ...(process.platform==='win32'?{titleBarStyle:'hidden',titleBarOverlay:{color:'#121315',symbolColor:'#f0f2f5',height:36}}:{}),
     icon: path.join(__dirname, 'assets', process.platform === 'win32' ? 'fadeyin-icon.ico' : 'fadeyin-icon.png'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
@@ -363,7 +413,22 @@ function createWindow() {
   mainWindow.webContents.setWindowOpenHandler(({url})=>{if(url==='https://docs.feishu.cn/sheets')shell.openExternal(url);return {action:'deny'}});
   mainWindow.webContents.session.setPermissionRequestHandler((_wc,_permission,callback)=>callback(false));
   mainWindow.loadFile(page);
+  mainWindow.webContents.on('did-finish-load',()=>{if(closePromptPending)mainWindow.webContents.send('fadeyin:close-requested')});
+  mainWindow.on('close',event=>{if(process.platform==='win32'&&!quitting){event.preventDefault();requestWindowClose()}});
+  mainWindow.on('closed',()=>{mainWindow=null});
 }
+
+handle('fadeyin:close-choice',async(_event,choice)=>{
+  if(process.platform!=='win32')throw new Error('当前平台不使用托盘关闭选项');
+  if(!closePromptPending)throw new Error('没有待处理的关闭请求');
+  if(!['cancel','tray','quit'].includes(choice))throw new Error('无效的关闭选项');
+  if(choice==='quit'&&mediaJob)throw new Error('任务尚未完成，请先取消任务后退出');
+  if(choice==='tray')minimizeToTray();
+  closePromptPending=false;
+  if(choice==='quit'){quitting=true;app.quit()}
+  return true;
+});
+app.on('before-quit',()=>{quitting=true;cancelled=true;for(const child of activeProcesses)child.kill();tray?.destroy();tray=null});
 
 handle('fadeyin:analyze', analyzeVideo, true);
 handle('fadeyin:ai-request', async (event, options) => {
@@ -384,6 +449,7 @@ handle('fadeyin:choose-export-folder', async () => {
   if(result.canceled)return null;const folder=fs.realpathSync(result.filePaths[0]);exportFolders.add(folder);return folder;
 });
 handle('fadeyin:split-video', splitVideo, true);
+handle('fadeyin:export-stills', exportStills, true);
 handle('fadeyin:save-report', async(_event,options)=>{
   const videoPath=videoFile(options?.path);
   if(typeof options.template!=='string'||options.template.length>128*1024*1024)throw new Error('报告内容过大，请按场导出');
@@ -402,6 +468,8 @@ ipcMain.on('fadeyin:cancel', event => {
 });
 
 app.whenReady().then(() => {
+  // Keep native macOS application commands; Windows uses the in-app settings.
+  if(process.platform==='win32')Menu.setApplicationMenu(null);
   const selfTestIndex = process.argv.indexOf('--self-test');
   if (selfTestIndex >= 0) {
     const testPath = process.argv[selfTestIndex + 1];

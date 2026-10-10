@@ -1,0 +1,19 @@
+const fs=require('fs'),path=require('path'),vm=require('vm'),assert=require('assert');
+function node(){return {children:[],dataset:{},style:{},classList:{remove(){}},setAttribute(){},removeAttribute(){},addEventListener(){},textContent:'',append(...items){this.children.push(...items)},prepend(...items){this.children.unshift(...items)},after(){},querySelector(){return node()}}}
+const els=new Map();for(const id of ['#newProjectBtn','#captureFrameBtn','#drop .dropIcon','#aiBtn','#globalSettings','#uiDensity','#reportBtn','#saveClipsBtn','#selectTool','#bladeTool'])els.set(id,node());
+let refreshes=0;const original=async()=>{refreshes++;return 'ok'};
+const project=node(),entry=node();project.dataset.projectId='p';project.querySelector=()=>null;entry.querySelector=()=>project;
+const exportArea=node();const saved={};const ctx={console,toast(){},escapeHtml:s=>s,refreshProjectList:original,projectListEntries:[{id:'p',cover:'data:image/jpeg;base64,a'}],localStorage:{getItem:k=>saved[k],setItem:(k,v)=>saved[k]=v},$:s=>els.get(s),document:{documentElement:node(),head:node(),createElement:node,querySelector:s=>s==='.stillControls'?exportArea:null,querySelectorAll:s=>s==='.projectEntry'?[entry]:[]}};
+Object.assign(ctx,{desktopApi:{},timelineEl:node(),setTimelineTool(){},busy:false,videoLoading:false,shots:[{}],setInterval(fn){ctx.refreshExportState=fn;fn()}});
+const oldQuery=ctx.document.querySelector;const brand=node(),sidebar=node();ctx.document.querySelector=s=>s==='.projectBrand'?brand:s==='.projectSidebar'?sidebar:['.modeSwitch','.settingsGear','.dockPanel[data-panel="player"] .dockBar','[data-app-mode="analysis"]','[data-app-mode="lap"]'].includes(s)?node():oldQuery(s);
+const headerQuery=ctx.document.querySelector;ctx.document.querySelector=s=>s.includes('.dockBar')||s==='#results .resultsHead'||s==='.main .wrap'?node():headerQuery(s);
+els.set('#workspaceFullscreenBtn',node());ctx.video=node();
+for(const id of ['#analyzeBtn','#cancelBtn','#reanalyzeBtn','#exportLapBtn','#feishuBtn','#shortcutHelpBtn'])els.set(id,node());
+const toolbarQuery=ctx.document.querySelector;ctx.document.querySelector=s=>s==='#workspace .settings'||s==='[data-metric="color"]'?node():toolbarQuery(s);
+const oldNode=node;node=function(){const n=oldNode();n.querySelectorAll=()=>[];n.insertBefore=function(item){this.children.unshift(item)};return n};
+vm.createContext(ctx);vm.runInContext(fs.readFileSync(path.join(__dirname,'../ui/workbench.js'),'utf8'),ctx);
+(async()=>{assert.equal(ctx.document.documentElement.dataset.density,'compact');els.get('#uiDensity').value='comfortable';els.get('#uiDensity').onchange();assert.equal(saved['pianlala.ui-density'],'comfortable');assert.equal(await ctx.refreshProjectList(),'ok');assert.equal(refreshes,1);assert.ok(project.children.some(x=>x.className==='projectCover'));assert.ok(els.get('#captureFrameBtn').innerHTML.includes('截图'));assert.ok(ctx.document.head.children.some(x=>x.href==='workbench.css'));assert.equal(els.get('#aiBtn').textContent,'AI 拉片 · 未上线');
+function luminance(hex){const c=hex.match(/\w\w/g).map(x=>parseInt(x,16)/255).map(v=>v<=.04045?v/12.92:((v+.055)/1.055)**2.4);return c[0]*.2126+c[1]*.7152+c[2]*.0722}
+assert.equal(els.get('#saveClipsBtn').textContent,'导出精确 MP4 镜头');assert.equal(els.get('#saveClipsBtn').disabled,false);ctx.shots=[];ctx.refreshExportState();assert.equal(els.get('#saveClipsBtn').disabled,true);assert.equal(els.get('#reportBtn').disabled,true);
+for(const [a,b] of [['b0aaa1','202123'],['69655f','faf9f7'],['eeeae3','202123'],['272624','faf9f7'],['d2bfa2','202123'],['695540','faf9f7']]){const x=luminance(a),y=luminance(b);assert.ok((Math.max(x,y)+.05)/(Math.min(x,y)+.05)>=4.5,`${a}/${b} contrast`)}
+console.log('PASS density persistence, cover metadata rendering, refresh passthrough, toolbar labels, last-loaded style and primary token text contrast. DOM-double; not visual acceptance.');})().catch(e=>{console.error(e);process.exitCode=1});
