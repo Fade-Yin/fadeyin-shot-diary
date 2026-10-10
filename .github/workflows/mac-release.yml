@@ -1,8 +1,11 @@
-name: Build Mac release
+name: Build signed and notarized Mac release
 on:
   workflow_dispatch:
 permissions:
   contents: read
+concurrency:
+  group: mac-release-${{ github.ref }}
+  cancel-in-progress: false
 jobs:
   mac:
     strategy:
@@ -14,15 +17,31 @@ jobs:
           - runner: macos-15-intel
             arch: x64
     runs-on: ${{ matrix.runner }}
-    timeout-minutes: 30
+    timeout-minutes: 90
     defaults:
       run:
         working-directory: desktop
+    env:
+      EXPECTED_ARCH: ${{ matrix.arch }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Require signing and notarization credentials
+        env:
+          CSC_LINK: ${{ secrets.CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+          APPLE_API_KEY_CONTENT: ${{ secrets.APPLE_API_KEY }}
+          APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
+          APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+        run: |
+          for name in CSC_LINK CSC_KEY_PASSWORD APPLE_API_KEY_CONTENT APPLE_API_KEY_ID APPLE_API_ISSUER; do
+            if [ -z "${!name}" ]; then echo "::error::Missing required Secret: $name"; exit 1; fi
+          done
+          umask 077
+          printf '%s' "$APPLE_API_KEY_CONTENT" > "$RUNNER_TEMP/pianlala-notary.p8"
+          echo "APPLE_API_KEY=$RUNNER_TEMP/pianlala-notary.p8" >> "$GITHUB_ENV"
       - run: npm ci
       - name: Install native FFprobe from pinned upstream release
         run: curl --fail --location --retry 3 https://github.com/eugeneware/ffmpeg-static/releases/download/b6.0/ffprobe-darwin-${{ matrix.arch }} -o node_modules/ffprobe-static/bin/darwin/${{ matrix.arch }}/ffprobe
@@ -30,16 +49,26 @@ jobs:
         run: |
           node -e "const cp=require('child_process');for(const p of [require('ffmpeg-static'),require('ffprobe-static').path]){cp.execFileSync('chmod',['+x',p]);console.log(cp.execFileSync('file',[p]).toString());console.log(cp.execFileSync(p,['-version']).toString().split('\n')[0])}"
           npm run check
-      - name: Build DMG and ZIP
+      - name: Sign and notarize app, then build DMG and ZIP
         env:
-          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
-        run: npx electron-builder --mac dmg zip --${{ matrix.arch }} --publish never
-      - name: Verify bundle and bundled FFmpeg
+          CSC_LINK: ${{ secrets.CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+          APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
+          APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+        run: npx electron-builder --mac dmg zip --${{ matrix.arch }} --publish never -c.forceCodeSigning=true
+      - name: Notarize and staple DMG
         env:
-          EXPECTED_ARCH: ${{ matrix.arch }}
+          APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
+          APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+        run: node scripts/notarize-dmg.cjs
+      - name: Verify signed bundle, ZIP and bundled media tools
         run: |
           node scripts/check-mac.cjs
-          shasum -a 256 dist/*.dmg dist/*.zip > dist/SHA256-${{ matrix.arch }}.txt
+          temp_dir=$(mktemp -d)
+          trap 'rm -rf "$temp_dir"' EXIT
+          ditto -x -k "dist/Pianlala-macOS-${EXPECTED_ARCH}-$(node -p "require('./package.json').version").zip" "$temp_dir"
+          MAC_APP_PATH="$temp_dir/片拉拉.app" node scripts/check-mac.cjs
+          shasum -a 256 dist/*.dmg dist/*.zip > dist/SHA256-${EXPECTED_ARCH}.txt
       - uses: actions/upload-artifact@v4
         with:
           name: Pianlala-macOS-${{ matrix.arch }}
@@ -48,3 +77,6 @@ jobs:
             desktop/dist/*.zip
             desktop/dist/SHA256-*.txt
           retention-days: 7
+      - name: Remove temporary notarization key
+        if: always()
+        run: rm -f "$RUNNER_TEMP/pianlala-notary.p8"

@@ -10,9 +10,9 @@
     "check": "node --check main.js && node --check preload.js && node --check ai-api.cjs",
     "build:win": "electron-builder --win portable",
     "build:win-installer": "electron-builder --win nsis",
-    "build:mac": "electron-builder --mac dmg zip",
-    "build:mac:x64": "electron-builder --mac dmg zip --x64",
-    "build:mac:arm64": "electron-builder --mac dmg zip --arm64"
+    "build:mac": "electron-builder --mac dmg zip -c.forceCodeSigning=true",
+    "build:mac:x64": "electron-builder --mac dmg zip --x64 -c.forceCodeSigning=true",
+    "build:mac:arm64": "electron-builder --mac dmg zip --arm64 -c.forceCodeSigning=true"
   },
   "devDependencies": {
     "electron": "^37.2.6",
@@ -69,11 +69,20 @@
         "zip"
       ],
       "category": "public.app-category.video",
-      "artifactName": "Pianlala-macOS-${arch}-${version}.${ext}"
+      "artifactName": "Pianlala-macOS-${arch}-${version}.${ext}",
+      "type": "distribution",
+      "hardenedRuntime": true,
+      "strictVerify": true,
+      "notarize": true,
+      "entitlements": "build/entitlements.mac.plist",
+      "entitlementsInherit": "build/entitlements.mac.plist"
     },
     "dmg": {
-      "title": "片拉拉"
-    }
+      "title": "片拉拉",
+      "sign": true
+    },
+    "afterPack": "scripts/prepare-mac.cjs",
+    "afterSign": "scripts/verify-mac-sign.cjs"
   },
   "dependencies": {
     "ffmpeg-static": "^5.3.0",
