@@ -8,6 +8,7 @@ function updateStatus(){status.textContent=reverseTimer?`倒放 ${reverseSpeed}�
 for(const event of ['play','pause','ratechange','ended'])video.addEventListener(event,updateStatus);
 function stopReverse(){clearInterval(reverseTimer);reverseTimer=0;reverseSpeed=0;updateStatus()}
 function stopTransport(){stopReverse();forwardSpeed=0;video.playbackRate=1}
+window.pianlalaStopTransport=()=>{stopTransport();shotStopToken++;clearTimeout(shotStopTimer);activeEnd=null;video.pause()};
 function seekFrame(s,index){
   stopTransport();shotStopToken++;clearTimeout(shotStopTimer);activeEnd=null;video.pause();
   video.currentTime=Math.max(s.start,Math.min(s.end-0.0001,s.start+index/nativeFps));
@@ -42,10 +43,10 @@ function decorate(){
     surface.onclick=activate;
     surface.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();e.stopPropagation();activate()}};
     surface.onpointermove=e=>{
-      if(activePreview!==surface||busy||videoLoading||shots[i]!==s||e.pointerType==='touch')return;
+      if(activePreview!==surface||busy||videoLoading||!video.paused||e.target.closest('button')||shots[i]!==s||e.pointerType==='touch')return;
       const r=surface.getBoundingClientRect(),ratio=Math.max(0,Math.min(1,(e.clientX-r.left)/Math.max(1,r.width))),index=Math.min(count-1,Math.floor(ratio*count));
       line.style.left=`${ratio*100}%`;previewPending={surface,s,i,index};
-      if(!previewRaf)previewRaf=requestAnimationFrame(()=>{previewRaf=0;const p=previewPending;previewPending=null;if(!p||p.surface!==activePreview||!p.surface.isConnected||busy||videoLoading||shots[p.i]!==p.s)return;seekFrame(p.s,p.index);const track=row.querySelector('.shotFrameTrack input'),label=row.querySelector('.shotFrameTrack small');if(track)track.value=p.index;if(label)label.textContent=`${fmt(p.s.start+p.index/nativeFps)} · ${p.index+1}/${count} 帧`});
+      if(!previewRaf)previewRaf=requestAnimationFrame(()=>{previewRaf=0;const p=previewPending;previewPending=null;if(!p||p.surface!==activePreview||!p.surface.isConnected||busy||videoLoading||shots[p.i]!==p.s)return;seekFrame(p.s,p.index);const track=row.querySelector('.shotFrameTrack input'),label=row.querySelector('.shotFrameTrack small');if(track)track.value=p.index;if(label)label.textContent=`${frameFmt(p.s.start+p.index/nativeFps)} · ${p.index+1}/${count} 帧`});
     };
   }
   for(const button of document.querySelectorAll('[data-play],[data-lap-play]')){
@@ -53,9 +54,9 @@ function decorate(){
     if(parent.querySelector('.shotFrameTrack'))continue;
     const i=Number(button.dataset.play??button.dataset.lapPlay),s=shots[i];if(!s)continue;
     const count=Math.max(1,Math.ceil((s.end-s.start)*nativeFps-1e-7));
-    const track=document.createElement('div');track.className='shotFrameTrack';
+    const track=document.createElement('div');track.className='shotFrameTrack';track.dataset.shotIndex=String(i);
     const slider=document.createElement('input');slider.type='range';slider.min=0;slider.max=count-1;slider.step=1;slider.value=0;slider.setAttribute('aria-label',`镜头 ${i+1} 帧定位`);
-    const label=document.createElement('small');const show=()=>{label.textContent=`${fmt(s.start+Number(slider.value)/nativeFps)} · ${Number(slider.value)+1}/${count} 帧`};show();
+    const label=document.createElement('small');const show=()=>{label.textContent=`${frameFmt(s.start+Number(slider.value)/nativeFps)} · ${Number(slider.value)+1}/${count} 帧`};show();
     slider.oninput=()=>{if(busy||shots[i]!==s)return;seekFrame(s,Number(slider.value));show()};
     track.append(slider,label);parent.append(track);
   }
@@ -65,17 +66,20 @@ for(const name of ['renderAnalysisRows','renderLapTable']){
   const wrapped=function(...args){const result=original.apply(this,args);decorate();return result};
   if(name==='renderAnalysisRows')renderAnalysisRows=wrapped;else renderLapTable=wrapped;
 }
-const oldPlay=playShot;playShot=function(...args){stopTransport();return oldPlay.apply(this,args)};
+playShot=async function(i){const s=shots[i];if(!s||busy||videoLoading)return;stopTransport();shotStopToken++;clearTimeout(shotStopTimer);video.pause();activeEnd=null;const token=shotStopToken;try{await seek(s.start);if(token!==shotStopToken||shots[i]!==s)return;activeEnd=s.end;await video.play();if(token!==shotStopToken)return;monitorShotEnd(token)}catch(error){if(token===shotStopToken){activeEnd=null;toast('镜头播放失败：'+error.message)}}};
 // Delegate on the persistent container: project restoration and pagination replace cards.
 const previewRows=$('#rows');
-function previewTarget(e){const image=e.target.closest('img.thumb,.shotHoverPreview');if(!image)return null;const row=image.closest('.shotRow'),button=row?.querySelector('[data-play]');if(!button)return null;const i=Number(button.dataset.play),s=shots[i];if(!s)return null;let surface=row.querySelector('.shotHoverPreview');if(!surface){surface=document.createElement('div');surface.className='shotHoverPreview';const img=row.querySelector('img.thumb');img.before(surface);surface.append(img);const line=document.createElement('span');line.className='shotPreviewLine';surface.append(line)}return {row,surface,i,s}}
+function previewTarget(e){if(e.target.closest('button')||e.type==='pointermove'&&!video.paused)return null;const image=e.target.closest('img.thumb,.shotHoverPreview');if(!image)return null;const row=image.closest('.shotRow'),button=row?.querySelector('[data-play]');if(!button)return null;const i=Number(button.dataset.play),s=shots[i];if(!s)return null;let surface=row.querySelector('.shotHoverPreview');if(!surface){surface=document.createElement('div');surface.className='shotHoverPreview';const img=row.querySelector('img.thumb');img.before(surface);surface.append(img);const line=document.createElement('span');line.className='shotPreviewLine';surface.append(line)}return {row,surface,i,s}}
 previewRows.addEventListener('click',e=>{const p=previewTarget(e);if(!p||busy||videoLoading)return;e.stopImmediatePropagation();previewPending=null;if(activePreview)activePreview.classList.remove('active');activePreview=p.surface;p.surface.classList.add('active');p.surface.querySelector('.shotPreviewLine').style.left='0%';seekFrame(p.s,0)},true);
 previewRows.addEventListener('pointermove',e=>{const p=previewTarget(e);if(!p||p.surface!==activePreview||busy||videoLoading)return;e.stopImmediatePropagation();const r=p.surface.getBoundingClientRect(),ratio=Math.max(0,Math.min(1,(e.clientX-r.left)/Math.max(1,r.width))),count=Math.max(1,Math.ceil((p.s.end-p.s.start)*nativeFps-1e-7));p.index=Math.min(count-1,Math.floor(ratio*count));p.surface.querySelector('.shotPreviewLine').style.left=ratio*100+'%';previewPending=p;if(!previewRaf)previewRaf=requestAnimationFrame(()=>{previewRaf=0;const target=previewPending;previewPending=null;if(!target||target.surface!==activePreview||!target.surface.isConnected||busy||videoLoading)return;seekFrame(target.s,target.index);const slider=target.row.querySelector('.shotFrameTrack input');if(slider)slider.value=target.index})},true);
 const oldLoad=loadVideo;loadVideo=async function(...args){stopTransport();await oldLoad.apply(this,args);if(sourceFile&&!videoLoading&&Number.isFinite(video.duration)){queueProjectSave();await projectWriteQueue}};
 video.addEventListener('play',stopReverse);
+let trackSyncFrame=0;
+function syncFrameTracks(){if(trackSyncFrame)return;trackSyncFrame=requestAnimationFrame(()=>{trackSyncFrame=0;if(busy||videoLoading)return;for(const track of document.querySelectorAll('.shotFrameTrack[data-shot-index]')){const i=Number(track.dataset.shotIndex),s=shots[i];if(!s||video.currentTime<s.start-.0001||video.currentTime>s.end+.0001)continue;const slider=track.querySelector('input'),count=Math.max(1,Math.ceil((s.end-s.start)*nativeFps-1e-7)),index=Math.max(0,Math.min(count-1,Math.floor((video.currentTime-s.start)*nativeFps+1e-5)));slider.value=index;track.querySelector('small').textContent=`${frameFmt(s.start+index/nativeFps)} · ${index+1}/${count} 帧`}})}
+for(const event of ['timeupdate','seeked','pause','ended'])video.addEventListener(event,syncFrameTracks);
 document.addEventListener('visibilitychange',()=>{if(document.hidden){stopTransport();video.pause()}});
 document.addEventListener('keydown',e=>{
-  if(e.isComposing||e.ctrlKey||e.metaKey||e.altKey||busy||!sourceFile||document.querySelector('dialog[open]')||e.target.closest('input,textarea,select,[contenteditable],dialog'))return;
+  if(e.isComposing||e.ctrlKey||e.metaKey||e.altKey||busy||!sourceFile||document.querySelector('dialog[open],:popover-open')||e.target.closest('input,textarea,select,[contenteditable],dialog,button'))return;
   const key=e.key.toLowerCase();if(!['j','k','l','c',' '].includes(key))return;
   e.preventDefault();e.stopImmediatePropagation();if(e.repeat)return;
   shotStopToken++;clearTimeout(shotStopTimer);

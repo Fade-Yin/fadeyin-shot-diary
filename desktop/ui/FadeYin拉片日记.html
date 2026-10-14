@@ -243,9 +243,10 @@ function syncPlayerPin(){unpinPlayer()}
 addEventListener('scroll',syncPlayerPin,{passive:true});addEventListener('resize',syncPlayerPin,{passive:true});
 function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(t._x);t._x=setTimeout(()=>t.classList.remove('show'),3200)}
 function fmt(t){if(!isFinite(t))return'0:00.000';const m=Math.floor(t/60),s=t-m*60;return`${m}:${s.toFixed(3).padStart(6,'0')}`}
+function frameFmt(t){const rate=Math.max(1,Math.round(nativeFps||25)),total=Math.round(Math.max(0,Number(t)||0)*(nativeFps||25)),seconds=Math.floor(total/rate),pad=n=>String(n).padStart(2,'0');return `${pad(Math.floor(seconds/3600))}:${pad(Math.floor(seconds/60)%60)}:${pad(seconds%60)}:${pad(total%rate)}`}
 function size(n){return n>1073741824?(n/1073741824).toFixed(1)+' GB':(n/1048576).toFixed(1)+' MB'}
 function setProgress(p,label){$('#progressWrap').classList.remove('hidden');$('#progressBar').style.width=p+'%';$('#progressPct').textContent=Math.round(p)+'%';$('#progressLabel').textContent=label}
-function seek(t){return new Promise((res,rej)=>{const ok=()=>{clean();res()},bad=()=>{clean();rej(new Error('无法定位视频画面'))},clean=()=>{video.removeEventListener('seeked',ok);video.removeEventListener('error',bad)};video.addEventListener('seeked',ok,{once:true});video.addEventListener('error',bad,{once:true});video.currentTime=Math.min(Math.max(t,0),Math.max(0,video.duration-.002));if(Math.abs(video.currentTime-t)<.002&&video.readyState>=2)setTimeout(ok,0)})}
+function seek(t){return new Promise((res,rej)=>{const target=Math.min(Math.max(t,0),Math.max(0,video.duration-.002));if(!video.seeking&&video.readyState>=2&&Math.abs(video.currentTime-target)<.000001)return res();let timer;const clean=()=>{clearTimeout(timer);video.removeEventListener('seeked',ok);video.removeEventListener('error',bad)},ok=()=>{if(video.seeking||Math.abs(video.currentTime-target)>.002)return;clean();res()},bad=()=>{clean();rej(new Error('无法定位视频画面'))};video.addEventListener('seeked',ok);video.addEventListener('error',bad,{once:true});timer=setTimeout(bad,10000);video.currentTime=target})}
 function makeScene(startShot,endShot,title=''){
   sceneSerial++;const start=shots[startShot].start,end=shots[endShot-1].end,mid=(start+end)/2;
   const coverShot=shots.findIndex(s=>mid>=s.start&&mid<s.end);
@@ -648,7 +649,7 @@ const projectDeleteStyle=document.createElement('style');projectDeleteStyle.text
 const root=document.querySelector('#workspace'), study=document.querySelector('#studyArea');
 const key='fadeyin.dock.v3', zoomKey='fadeyin.thumbnails.v1';
 const defaults=()=>({axis:'v',ratio:.5,a:{axis:'h',ratio:.14,a:'library',b:{axis:'h',ratio:.74,a:'player',b:{axis:'h',ratio:.6,a:'timeline',b:'settings'}}},b:'study'});
-let tree=defaults(),dragged=null;
+let tree=defaults(),dragged=null,exportsInToolbar=false;
 const panels={};
 const timelineArea=document.createElement('div');timelineArea.id='timelineArea';timelineArea.append(document.querySelector('#timelineCard'));const timelineEmpty=document.createElement('p');timelineEmpty.className='timelineDockEmpty';timelineEmpty.textContent='检测切点后，在这里查看全片通览、选择镜头和创建序列。';timelineArea.append(timelineEmpty);
 for(const [id,title,content] of [['library','项目库',document.querySelector('.projectSidebar')],['player','播放器',document.querySelector('#videoSlot')],['settings','检测设置',root.querySelector('.settings')],['timeline','时间线 · 全片通览 · 序列',timelineArea],['study','镜头工作区',study]]){
@@ -674,9 +675,9 @@ function build(n){if(typeof n==='string'){panels[n].style.minWidth=innerWidth>76
 function size(){const length=n.axis==='h'?split.clientWidth:split.clientHeight;const minA=minSize(n.a,n.axis),minB=minSize(n.b,n.axis);if(length>minA+minB+8)n.ratio=Math.max(minA/(length-8),Math.min(1-minB/(length-8),n.ratio));a.style.flex=`${n.ratio} 1 0px`;b.style.flex=`${1-n.ratio} 1 0px`;grip.setAttribute('aria-valuenow',Math.round(n.ratio*100))}size();
 grip.onpointerdown=e=>{if(e.button!==0)return;e.preventDefault();grip.setPointerCapture(e.pointerId);const r=split.getBoundingClientRect();grip.onpointermove=ev=>{n.ratio=Math.max(.12,Math.min(.88,n.axis==='h'?(ev.clientX-r.left)/r.width:(ev.clientY-r.top)/r.height));size()};grip.onpointerup=grip.onpointercancel=()=>{grip.onpointermove=null;save()}};
 grip.onkeydown=e=>{if(!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(e.key))return;e.preventDefault();n.ratio=Math.max(.12,Math.min(.88,n.ratio+(['ArrowLeft','ArrowUp'].includes(e.key)?-.025:.025)));size();save()};split.append(a,grip,b);requestAnimationFrame(size);return split}
-function render(){const video=panels.player.querySelector('#video'),playing=!video.paused;Object.values(panels).forEach(p=>p.style.flex='');root.replaceChildren(build(tree));if(innerWidth>760){root.firstElementChild.style.minWidth=minSize(tree,'h')+'px';root.firstElementChild.style.minHeight=minSize(tree,'v')+'px'}if(playing)video.play().catch(()=>{})}
+function render(){const video=panels.player.querySelector('#video'),playing=!video.paused;Object.values(panels).forEach(p=>p.style.flex='');const visibleTree=exportsInToolbar?remove(tree,'settings'):tree;root.replaceChildren(build(visibleTree));if(exportsInToolbar){panels.settings.hidden=true;panels.settings.style.display='none';root.append(panels.settings)}if(innerWidth>760){root.firstElementChild.style.minWidth=minSize(visibleTree,'h')+'px';root.firstElementChild.style.minHeight=minSize(visibleTree,'v')+'px'}if(playing)video.play().catch(()=>{})}
 root.classList.add('dockWorkspace');
-window.PianlalaLayout={get:()=>JSON.parse(JSON.stringify(tree)),apply:value=>{if(busy)return false;const next=JSON.parse(JSON.stringify(value)),ids=[];if(!valid(next,ids)||ids.length!==5||new Set(ids).size!==5)throw new Error('布局数据无效');tree=next;render();save();return true},reset:()=>{if(busy)return false;tree=defaults();render();save();return true}};
+window.PianlalaLayout={integrateExports:()=>{exportsInToolbar=true;render()},get:()=>JSON.parse(JSON.stringify(tree)),apply:value=>{if(busy)return false;const next=JSON.parse(JSON.stringify(value)),ids=[];if(!valid(next,ids)||ids.length!==5||new Set(ids).size!==5)throw new Error('布局数据无效');tree=next;render();save();return true},reset:()=>{if(busy)return false;tree=defaults();render();save();return true}};
 const reset=document.createElement('button');reset.className='btn';reset.id='resetLayoutBtn';reset.textContent='恢复布局';reset.onclick=()=>{tree=defaults();render();save()};document.querySelector('.topActions').append(reset);render();
 const controls=document.createElement('div');controls.className='thumbControls';controls.innerHTML='<span>缩略图</span><button class="btn" aria-label="缩小缩略图">−</button><input aria-label="缩略图大小" type="range" min="160" max="440" step="20"><button class="btn" aria-label="放大缩略图">＋</button>';
 document.querySelector('#results .resultsHead').append(controls);const slider=controls.querySelector('input');let initial=240;try{initial=Number(localStorage.getItem(zoomKey))||240}catch{}slider.value=initial;
@@ -731,7 +732,7 @@ document.addEventListener('keydown',e=>{
  if(e.defaultPrevented||e.isComposing||busy||e.altKey||document.querySelector('dialog[open]')||e.target.closest('input,textarea,select,[contenteditable],dialog'))return;
  const s=shortcuts.find(s=>s.key===e.key.toLowerCase()&&!!s.mod===!!(e.ctrlKey||e.metaKey)&&(s.key==='?'||!!s.shift===e.shiftKey));
  if(!s||(!sourceFile&&!s.always)||e.repeat&&!s.repeat)return;
- if(help.matches(':popover-open')&&!s.always)return;
+ if(document.querySelector(':popover-open')&&!s.always)return;
  // Keep native Space/Enter activation on buttons, video controls and separators.
  if(s.key===' '&&e.target.closest('button,a,video,[role="separator"]'))return;
  e.preventDefault();s.run();
@@ -755,7 +756,7 @@ function imageIdentity(value){if(!imageIds.has(value))imageIds.set(value,++ident
 function metricIdentity(value){if(!metricIds.has(value))metricIds.set(value,++identitySerial);return metricIds.get(value)}
 function renderPager(mode,total,size,page){
  const id=mode+'Pager';let nav=document.getElementById(id);
- if(!nav){nav=document.createElement('nav');nav.id=id;nav.className='resultPager';nav.setAttribute('aria-label',mode==='lap'?'拉片表分页':'镜头分页');const target=mode==='lap'?$('#logPanel .columnHelp'):$('#results .resultsHead');target.after(nav)}
+ if(!nav){nav=document.createElement('nav');nav.id=id;nav.className='resultPager';nav.setAttribute('aria-label',mode==='lap'?'拉片表分页':'镜头分页');if(mode==='lap')$('#logPanel .columnHelp').after(nav);else $('#results').prepend(nav)}
  nav.replaceChildren();const count=Math.max(1,Math.ceil(total/size));
  const info=document.createElement('span');info.textContent=`第 ${page+1} / ${count} 页 · 共 ${total} 个镜头`;
  for(const [text,delta] of [['上一页',-1],['下一页',1]]){const button=document.createElement('button');button.className='btn';button.textContent=text;button.disabled=page+delta<0||page+delta>=count;button.onclick=()=>{if(busy)return;if(mode==='lap'){lapPage+=delta;renderLapTable()}else{analysisPage+=delta;renderAnalysisRows()}document.getElementById(id).scrollIntoView({block:'nearest'})};nav.append(button)}nav.prepend(info);nav.hidden=total<=size;
@@ -764,4 +765,4 @@ const hardeningStyle=document.createElement('style');hardeningStyle.textContent=
 .confirmDialog{width:min(440px,calc(100vw - 32px));max-height:calc(100vh - 32px);overflow:auto;border:1px solid var(--line);border-radius:14px;padding:24px;background:var(--panel);color:var(--text);font:inherit}.confirmDialog::backdrop{background:#0008}.confirmDialog h2{font-size:18px;margin:0 0 14px}.confirmDialog p{white-space:pre-wrap;overflow-wrap:anywhere;margin:0 0 24px;line-height:1.7}.confirmActions{display:flex;justify-content:flex-end;gap:10px}.confirmActions .btn{min-height:40px}.confirmDialog .danger{background:var(--danger);color:white;border-color:var(--danger)}.confirmDialog button:focus-visible{outline:2px solid var(--accent);outline-offset:3px}.resultPager{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 12px}.resultPager[hidden]{display:none}.resultPager span{margin-right:auto}#rows .shotRow{content-visibility:auto;contain-intrinsic-size:auto 320px}html{caret-color:var(--accent)}::selection{background:var(--accent);color:var(--panel)}
 @media(prefers-reduced-motion:reduce){.projectDelete,.bar i{transition:none}}
 `;document.head.append(hardeningStyle);
-</script><script src="analysis-model.js"></script><script src="sequence-analysis.js"></script><script src="window-close.js"></script><script src="playback-tools.js"></script><script src="global-settings.js"></script><script src="workbench.js"></script><script src="project-covers.js"></script><script src="layout-presets.js"></script><script src="project-library.js"></script><script src="track-mode.js"></script></body></html>
+</script><script src="analysis-model.js"></script><script src="sequence-analysis.js"></script><script src="window-close.js"></script><script src="playback-tools.js"></script><script src="global-settings.js"></script><script src="workbench.js"></script><script src="project-covers.js"></script><script src="layout-presets.js"></script><script src="project-library.js"></script><script src="track-mode.js"></script><script src="interaction-update.js"></script><script src="toolbar-panels.js"></script><script src="mac-workbench.js"></script></body></html>

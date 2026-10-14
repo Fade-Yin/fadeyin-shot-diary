@@ -2,6 +2,7 @@ const { contextBridge, ipcRenderer, webUtils } = require('electron');
 
 contextBridge.exposeInMainWorld('fadeYinDesktop', {
   platform: process.platform,
+  setAppearance: theme => ipcRenderer.invoke('fadeyin:appearance', theme),
   closeChoice: choice => ipcRenderer.invoke('fadeyin:close-choice', choice),
   onCloseRequested: callback => {
     const listener=()=>callback();ipcRenderer.on('fadeyin:close-requested',listener);

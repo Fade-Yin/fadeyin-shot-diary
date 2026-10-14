@@ -1,0 +1,14 @@
+const fs=require('node:fs'),path=require('node:path'),os=require('node:os'),vm=require('node:vm'),assert=require('node:assert/strict'),{execFileSync}=require('node:child_process');
+const ffmpeg=require('ffmpeg-static'),ffprobe=require('ffprobe-static').path,{clipArgs,clipRange,frameTimesFromCsv}=require('../clip-export.cjs');
+const source=process.argv[2];if(!source)throw Error('Supply the real source video path');
+const run=(tool,args)=>execFileSync(tool,args,{windowsHide:true,maxBuffer:32*1024*1024});
+const text=run(ffmpeg,['-hide_banner','-loglevel','error','-i',source,'-vf',"select='gte(scene,0)',signalstats,metadata=print:file=-",'-an','-f','null','-']).toString();
+const frames=[];let current;for(const line of text.split(/\r?\n/)){const time=line.match(/frame:(\d+).*pts_time:([\d.]+)/);if(time){current={time:+time[2],score:0,frameDifference:0};frames.push(current)}const score=line.match(/lavfi.scene_score=([\d.]+)/),diff=line.match(/lavfi.signalstats.YDIF=([\d.]+)/);if(current&&score)current.score=+score[1];if(current&&diff)current.frameDifference=+diff[1]/255}
+const main=fs.readFileSync(path.join(__dirname,'../main.js'),'utf8'),fn=main.slice(main.indexOf('function localMaxima('),main.indexOf('function downsampleMetric('));
+const context=vm.createContext({});vm.runInContext(fn,context);const cuts=context.localMaxima(frames,36,12/50,45.013,50);
+assert(cuts.some(t=>Math.abs(t-3.28)<1e-7));assert(cuts.some(t=>Math.abs(t-12.4)<1e-7));assert(!cuts.includes(3.26));assert(!cuts.includes(12.38));
+const times=frameTimesFromCsv(run(ffprobe,['-v','error','-select_streams','v:0','-show_entries','frame=best_effort_timestamp_time','-of','csv=p=0',source]).toString());
+const raw=file=>run(ffmpeg,['-v','error','-i',file,'-map','0:v:0','-vf','scale=64:36,format=gray','-fps_mode','passthrough','-f','rawvideo','pipe:1']),pixels=raw(source),size=64*36,dir=fs.mkdtempSync(path.join(os.tmpdir(),'pianlala-real-cut-fixed-'));
+for(const [name,start,end,expected] of [['shot_002',3.28,5.68,164],['shot_006',12.4,14.14,620]]){const range=clipRange({start,end},times,45.013);assert.equal(range.startFrame,expected);const output=path.join(dir,name+'.mp4');run(ffmpeg,clipArgs(source,output,range));const decoded=raw(output);let difference=0;for(let p=0;p<size;p++)difference+=Math.abs(decoded[p]-pixels[expected*size+p]);assert(difference/size<2);assert.equal(decoded.length/size,range.endFrame-range.startFrame);console.log(`PASS ${name}: begins at source frame ${expected}, ${start}s, exact frame count`)}
+const short=[{time:0,score:0,frameDifference:0},{time:.02,score:.8,frameDifference:.8},{time:.04,score:.9,frameDifference:.9},{time:.06,score:0,frameDifference:0}];assert(context.localMaxima(short,36,.02,.12,50).includes(.02));assert(context.localMaxima(short,36,.02,.12,50).includes(.04));
+console.log('PASS one-frame shots preserved. Corrected test exports: '+dir);

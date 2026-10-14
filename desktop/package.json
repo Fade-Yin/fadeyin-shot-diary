@@ -1,10 +1,10 @@
 {
   "name": "fadeyin-shot-diary",
-  "version": "0.7.30",
+  "version": "0.8.4",
   "description": "片拉拉 - 镜头拆解与序列拉片分析",
   "main": "main.js",
   "author": "Fadeyin",
-  "license": "UNLICENSED",
+  "license": "MIT",
   "scripts": {
     "start": "electron .",
     "check": "node --check main.js && node --check preload.js && node --check ai-api.cjs",
@@ -34,6 +34,7 @@
       "main.js",
       "preload.js",
       "ai-api.cjs",
+      "clip-export.cjs",
       "report-stream.cjs",
       "assets/fadeyin-icon.png",
       "assets/fadeyin-icon.ico"
@@ -51,6 +52,19 @@
       }
     ],
     "win": {
+      "files": [
+        "main.js",
+        "preload.js",
+        "ai-api.cjs",
+        "clip-export.cjs",
+        "report-stream.cjs",
+        "assets/fadeyin-icon.png",
+        "assets/fadeyin-icon.ico",
+        "!release-*/**",
+        "!node_modules/ffprobe-static/bin/darwin/**",
+        "!node_modules/ffprobe-static/bin/linux/**",
+        "!node_modules/ffprobe-static/bin/win32/ia32/**"
+      ],
       "icon": "assets/fadeyin-icon.ico",
       "target": [
         "portable"

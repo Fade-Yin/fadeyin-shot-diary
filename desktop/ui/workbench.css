@@ -317,6 +317,23 @@ html.desktopMode .main {padding-top:0}
 .dockPanel[data-panel=settings] .stillControls>h3 {display:none}
 @media(max-width:760px){#workspace.dockWorkspace{display:block!important;overflow:visible}.dockPanel[data-panel=library] .projectSidebar{max-height:260px}}
 /* Semantic type and icon roles: final authority across panels, dialogs and themes. */
+.videoDropActive {outline:2px solid var(--accent);outline-offset:-2px}
+#playhead,.trackPlayhead {pointer-events:auto!important;cursor:ew-resize;touch-action:none;z-index:6}
+#playhead::after,.trackPlayhead::after {content:'';position:absolute;left:-6px;right:-6px;top:0;bottom:0}
+.lapPresetMenu {position:fixed;inset:auto;margin:0;padding:5px;max-height:240px;overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:6px;color:var(--text)}
+.lapPresetMenu .btn {display:block;width:100%;text-align:left;border:0}
+.lapPresetMenu .btn.active {background:var(--accent2);color:var(--accent)}
+#timeline .segment {border-right:1px solid #ffffff26;min-width:0}
+#timeline .segment span {border:0;background:transparent;min-width:0;padding:0;font-weight:500}
+#timeline .segment.selected {background:color-mix(in srgb,var(--accent) 35%,var(--panel))!important;box-shadow:inset 0 2px var(--accent),inset 0 -2px var(--accent)}
+#timeline .segment.densityTiny,.trackClip.densityTiny {border-right:0}
+#timeline .segment.densityCompact span,.trackClip.densityCompact span,.trackClip.densityNoImage img {display:none}
+.trackClip:hover {filter:brightness(1.2)}
+.trackClip:focus-visible {outline:2px solid var(--accent);outline-offset:-2px;z-index:2}
+#playhead,.trackPlayhead {z-index:5}
+.saveWarning:empty {display:none}
+.saveWarning {color:var(--danger);font-size:12px;white-space:nowrap}
+.lapCurrentShot td {box-shadow:inset 0 2px var(--accent)}
 #trackMode {min-width:0;padding:8px 0}
 .trackControls {display:flex;align-items:center;gap:18px;margin-bottom:12px;font-size:var(--type-label)}
 .trackControls label {display:flex;align-items:center;gap:8px}.trackStatus{color:var(--muted)}
@@ -328,9 +345,9 @@ html.desktopMode .main {padding-top:0}
 .videoTrack {height:96px}.audioTrack{height:80px;background:var(--surface-input)}
 .trackLabel {position:absolute;top:-20px;left:8px;font-size:var(--type-meta);color:var(--muted)}
 .trackClips {position:relative;height:100%}
-.trackClip {position:absolute;top:0;height:94px;min-width:2px;padding:0;border:1px solid #4c8591;border-radius:3px;overflow:hidden;background:#244850;color:#fff;cursor:pointer}
+.trackClip {position:absolute;top:0;height:94px;min-width:0;padding:0;border:0;border-right:1px solid #ffffff26;border-radius:0;overflow:hidden;background:#244850;color:#fff;cursor:pointer}
 .trackClip img {display:block;width:100%;height:72px;object-fit:cover;opacity:.85}.trackClip span{display:block;font-size:11px;text-align:left;padding-left:5px}
-.trackClip.selected {border:2px solid var(--accent)}
+.trackClip.selected {background:color-mix(in srgb,var(--accent) 35%,var(--panel));box-shadow:inset 0 2px var(--accent),inset 0 -2px var(--accent)}
 .trackWave {display:block;width:100%;height:80px;fill:#439b81;stroke:none}
 .trackPlayhead {position:absolute;top:0;bottom:0;width:2px;background:#ed6464;pointer-events:none}
 .projectLibraryTools {display:flex;flex-wrap:wrap;gap:6px}
@@ -377,3 +394,68 @@ button,input,select,textarea {font-family:inherit;letter-spacing:normal}
 .detectionToolbar .frameInputs {width:76px;font-size:var(--type-label)}
 .detectionToolbar input[type=number] {width:58px}
 @media(pointer:coarse){.editorTopbar .modeBtn,.editorTopbar .layoutTool,.editorTopbar .keyboardHelpBtn,.editorTopbar .settingsGear{width:44px;height:44px;min-height:44px}}
+
+/* Reference-aligned task surfaces: compact layout menu, wider task dialogs. */
+#layoutPopover {padding:8px!important}
+#layoutPopover h2,#layoutPopover .settingsRow:has(#savedLayouts),#layoutPopover #loadLayout,#layoutPopover #defaultLayout {display:none}
+#layoutPopover .layoutMenuItem {display:block;width:100%;text-align:left;border:0;background:transparent;padding:10px 12px;border-radius:4px}
+#layoutPopover .layoutMenuItem:hover,#layoutPopover .layoutMenuItem:focus-visible {background:var(--surface-raised);color:var(--accent)}
+#layoutPopover .settingsRow {padding:12px 8px 0;border-top:1px solid var(--line)}
+#layoutPopover #saveLayout {margin:0 8px 8px}
+#layoutPopover .confirmActions {margin:0;padding:4px 8px;border-top:1px solid var(--line)}
+.layoutQuick {max-height:40vh;overflow:auto}
+.editorDialog {width:min(760px,calc(100vw - 32px));max-width:none;max-height:calc(100dvh - 48px);margin:auto;padding:0;border:1px solid var(--line);border-radius:10px;background:var(--panel);color:var(--text);overflow:auto;font-size:13px}
+.editorDialog::backdrop {background:#0008}
+.editorDialog.anchoredTaskPanel {position:fixed;inset:auto;margin:0;padding:0;max-height:calc(100dvh - 64px)}
+.editorDialog.anchoredTaskPanel::backdrop {background:transparent}
+#globalSettings #aiBtn[hidden] {display:none!important}
+.editorDialog>header {display:flex;align-items:center;justify-content:space-between;padding:12px 20px;border-bottom:1px solid var(--line)}
+.editorDialog h2 {margin:0;font-size:16px;font-weight:600}
+.editorDialog>header button {padding:6px;display:grid;place-items:center}
+.editorDialogTabs {display:flex;gap:4px;padding:12px 20px;border-bottom:1px solid var(--line)}
+.editorDialogTabs .btn {border:0;background:transparent;padding:8px 12px}
+.editorDialogTabs .btn[aria-selected=true] {background:var(--surface-raised);color:var(--accent)}
+.editorDialogPane {padding:16px 20px}
+.editorDialogPane[hidden] {display:none!important}
+.editorDialog :focus-visible {outline:2px solid var(--accent);outline-offset:2px}
+.editorDialog>footer {display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px 20px;border-top:1px solid var(--line);font-size:12px;color:var(--muted)}
+.shortcutGrid {display:grid;grid-template-columns:1fr 1fr;gap:0 28px;margin:0;min-height:220px;align-content:start}
+.shortcutGrid>div {display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:44px;border-bottom:1px solid var(--line)}
+.shortcutGrid dt {font-size:12px;line-height:1.5}
+.shortcutGrid dd {margin:0;flex-shrink:0}
+.shortcutGrid kbd {display:inline-block;font-family:inherit;font-size:12px;line-height:1.5;border:1px solid var(--line);border-radius:4px;background:var(--bg);padding:3px 7px;white-space:nowrap}
+.editorTopbar .toolbarExport {display:inline-flex;align-items:center;gap:6px;padding:5px 12px;width:auto;background:var(--accent);color:#052a2c;border-color:transparent;font-weight:600}
+.editorTopbar .toolbarExport:hover {background:var(--accent);color:#052a2c;filter:brightness(1.08)}
+.exportWindowBody {display:grid;grid-template-columns:minmax(0, .85fr) minmax(0,1.15fr);min-height:360px}
+.exportPreview {display:flex;flex-direction:column;gap:12px;padding:20px;background:var(--bg);min-width:0}
+.exportPreview img {width:100%;height:240px;object-fit:contain;background:#090b0d;border-radius:4px}
+.exportPreview b {font-size:13px;overflow-wrap:anywhere}
+.exportPreview span {font-size:12px;color:var(--muted)}
+.exportFields {display:flex;flex-direction:column;align-items:stretch;gap:12px}
+.exportFields p {margin:0;color:var(--muted);font-size:12px;line-height:1.6}
+.exportFields .btn {white-space:normal;min-height:36px}
+.exportFields [hidden] {display:none!important}
+@media(max-width:640px){.shortcutGrid{grid-template-columns:1fr}.exportWindowBody{grid-template-columns:1fr}.exportPreview img{height:120px}.editorDialogTabs{flex-wrap:wrap}}
+#rows .rowBtns .shotActionIcon {display:inline-flex;align-items:center;justify-content:center;flex:0 0 32px;width:32px;height:32px;min-height:32px;padding:6px;border-radius:6px}
+.lapFramePreview {position:relative;width:fit-content;max-width:100%;border-radius:6px;overflow:hidden}
+.lapFramePreview .lapFrame {max-width:100%}
+.logTable .lapFramePreview .lapPlay {position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:grid;place-items:center;width:44px;height:44px;min-height:44px;margin:0;padding:10px;border-radius:50%;border:1px solid #ffffff80;background:#101317dd;color:#fff;opacity:0;pointer-events:none;transition:opacity .12s ease-out}
+.lapFramePreview:hover .lapPlay,.lapFramePreview:focus-within .lapPlay {opacity:1;pointer-events:auto}
+.lapFramePreview .lapPlay .workbenchIcon {width:24px;height:24px;fill:currentColor;stroke:none}
+@media(hover:none){.logTable .lapFramePreview .lapPlay{opacity:1;pointer-events:auto}}
+@media(prefers-reduced-motion:reduce){.lapFramePreview .lapPlay{transition:none}}
+.sharedShotPreview {position:relative;overflow:hidden;border-radius:6px}
+#rows .sharedShotPreview {width:100%}
+#rows .rowBtns:empty {display:none}
+#rows .rowBtns {margin-top:0}
+.sharedShotPreview .framePlayOverlay {position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:grid;place-items:center;width:44px;height:44px;min-height:44px;padding:10px;margin:0;border-radius:50%;border:1px solid #ffffff80;background:#101317dd;color:#fff;opacity:0;pointer-events:none;transition:opacity .12s ease-out;z-index:3}
+.sharedShotPreview:hover .framePlayOverlay,.sharedShotPreview:focus-within .framePlayOverlay {opacity:1;pointer-events:auto}
+.sharedShotPreview .framePlayOverlay svg {width:24px;height:24px;fill:currentColor;stroke:none}
+.shotCornerActions {position:absolute;right:6px;top:6px;display:flex;gap:4px;z-index:4;opacity:0;pointer-events:none;transition:opacity .12s ease-out}
+.sharedShotPreview:hover .shotCornerActions,.sharedShotPreview:focus-within .shotCornerActions {opacity:1;pointer-events:auto}
+.shotCornerActions .shotActionIcon {display:grid;place-items:center;width:28px;height:28px;min-height:28px;padding:5px;border:1px solid #ffffff30;border-radius:5px;background:#101317dd;color:#fff}
+.shotCornerActions .shotActionIcon:hover:not(:disabled) {background:#263438;color:var(--accent)}
+.shotCornerActions .shotActionIcon:disabled {opacity:.35}
+.sharedShotPreview button:focus-visible {outline:2px solid var(--accent);outline-offset:-2px}
+@media(hover:none){.sharedShotPreview .framePlayOverlay,.sharedShotPreview .shotCornerActions{opacity:1;pointer-events:auto}}
+@media(prefers-reduced-motion:reduce){.sharedShotPreview .framePlayOverlay,.shotCornerActions{transition:none}}

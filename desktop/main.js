@@ -1,10 +1,11 @@
-const { app, BrowserWindow, dialog, ipcMain, shell, Tray, Menu } = require('electron');
+const { app, BrowserWindow, dialog, ipcMain, shell, Tray, Menu, nativeTheme } = require('electron');
 const { spawn } = require('node:child_process');
 const fs = require('node:fs');
 const path = require('node:path');
 const { pathToFileURL } = require('node:url');
 const { writeVideoReport } = require('./report-stream.cjs');
 const { requestAI } = require('./ai-api.cjs');
+const { frameTimesFromCsv,clipRange,clipArgs } = require('./clip-export.cjs');
 const aiRequests = new Map();
 
 let mainWindow = null;
@@ -107,7 +108,7 @@ function ratio(text) {
 async function probeVideo(videoPath) {
   const result = await run(mediaTool('ffprobe'), [
     '-v', 'error', '-select_streams', 'v:0',
-    '-show_entries', 'stream=width,height,avg_frame_rate,r_frame_rate:format=duration',
+    '-show_entries', 'stream=width,height,avg_frame_rate,r_frame_rate:format=duration,start_time',
     '-of', 'json', videoPath
   ]);
   const data = JSON.parse(result.stdout.toString('utf8'));
@@ -116,6 +117,7 @@ async function probeVideo(videoPath) {
   if (!stream || !Number.isFinite(duration)) throw new Error('无法读取视频信息');
   return {
     duration,
+    startTime: Number(data.format?.start_time)||0,
     width: stream.width,
     height: stream.height,
     fps: ratio(stream.avg_frame_rate) || ratio(stream.r_frame_rate) || 25
@@ -134,10 +136,17 @@ function localMaxima(frames, sensitivity, minGap, duration, fps = 25) {
     const median = history.length ? history[Math.floor(history.length / 2)] : 0;
     const adaptive = Math.max(soft, median * 5 + 0.012);
     // A hard cut is valid even beside a stronger cut (including one-frame shots).
-    if (current.score >= hard || current.frameDifference >= hard || (localPeak && current.score >= adaptive)) candidates.push(current.time);
+    if (current.score >= hard || current.frameDifference >= hard || (localPeak && current.score >= adaptive)) {
+      // scene_score subtracts the preceding frame difference. A larger change
+      // on the next frame can therefore receive a much smaller scene_score.
+      // Resolve this adjacent transition before applying minimum shot length.
+      const next=frames[i+1];
+      const sharperNext=minGap>1.01/fps&&next&&next.time-current.time<=1.5/fps&&Number.isFinite(current.frameDifference)&&Number.isFinite(next.frameDifference)&&next.frameDifference>current.frameDifference*1.05;
+      candidates.push(sharperNext?next.time:current.time);
+    }
   }
   const cuts = [0];
-  for (const time of candidates) {
+  for (const time of [...new Set(candidates)].sort((a,b)=>a-b)) {
     if (time >= 1 / fps - 1e-7 && time <= duration - minGap + 1e-7 && time - cuts[cuts.length - 1] >= minGap - 1e-7) cuts.push(time);
   }
   if (duration - cuts[cuts.length - 1] < minGap * 0.35 && cuts.length > 1) cuts.pop();
@@ -333,6 +342,10 @@ async function splitVideo(event, options) {
   const shots = Array.isArray(options.shots) ? options.shots : [];
   const meta=await probeVideo(videoPath);
   if(!shots.length||shots.length>100000||shots.some((s,i)=>!Number.isFinite(s.start)||!Number.isFinite(s.end)||s.start<0||s.end<=s.start||s.end>meta.duration+.001||(i>0&&s.start<shots[i-1].end-.001)))throw new Error('镜头时间范围无效');
+  sendProgress(0,'正在读取原视频帧边界…');
+  const frameProbe=await run(mediaTool('ffprobe'),['-v','error','-select_streams','v:0','-show_entries','frame=best_effort_timestamp_time','-of','csv=p=0',videoPath]);
+  const frameTimes=frameTimesFromCsv(frameProbe.stdout.toString('utf8'),meta.startTime);
+  const ranges=shots.map(shot=>clipRange(shot,frameTimes,meta.duration));
   const base = path.basename(videoPath, path.extname(videoPath)).replace(/[<>:"/\\|?*]/g, '_');
   let targetDir = path.join(outputDir, `${base}_镜头视频`);
   let exportNumber = 2;
@@ -343,12 +356,7 @@ async function splitVideo(event, options) {
     const shot = shots[index];
     const output = path.join(targetDir, `shot_${String(index + 1).padStart(3, '0')}.mp4`);
     sendProgress(index / shots.length * 100, `FFmpeg 正在精确导出镜头 ${index + 1}/${shots.length}…`);
-    await run(mediaTool('ffmpeg'), [
-      '-n', '-hide_banner', '-nostdin', '-loglevel', 'error',
-      '-ss', Number(shot.start).toFixed(6), '-to', Number(shot.end).toFixed(6), '-i', videoPath,
-      '-map', '0:v:0', '-map', '0:a?', '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '18',
-      '-c:a', 'aac', '-b:a', '192k', '-movflags', '+faststart', '-avoid_negative_ts', 'make_zero', output
-    ]);
+    await run(mediaTool('ffmpeg'),clipArgs(videoPath,output,ranges[index]));
   }
   sendProgress(100, '镜头视频导出完成');
   revealedPaths.add(targetDir);
@@ -394,9 +402,9 @@ function createWindow() {
     height: 920,
     minWidth: 980,
     minHeight: 680,
-    backgroundColor: '#17181b',
+    backgroundColor: nativeTheme.shouldUseDarkColors ? '#17181c' : '#e9eaed',
     title: '片拉拉',
-    ...(process.platform==='win32'?{titleBarStyle:'hidden',titleBarOverlay:{color:'#121315',symbolColor:'#f0f2f5',height:36}}:{}),
+    ...(process.platform==='win32'?{titleBarStyle:'hidden',titleBarOverlay:{color:nativeTheme.shouldUseDarkColors?'#17181c':'#e9eaed',symbolColor:nativeTheme.shouldUseDarkColors?'#eeeef2':'#202126',height:44}}:process.platform==='darwin'?{titleBarStyle:'hiddenInset',trafficLightPosition:{x:18,y:14}}:{}),
     icon: path.join(__dirname, 'assets', process.platform === 'win32' ? 'fadeyin-icon.ico' : 'fadeyin-icon.png'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
@@ -418,6 +426,11 @@ function createWindow() {
   mainWindow.on('closed',()=>{mainWindow=null});
 }
 
+handle('fadeyin:appearance',(_event,theme)=>{
+  if(!['light','dark'].includes(theme))throw new Error('无效的外观设置');
+  if(process.platform==='win32'&&mainWindow&&!mainWindow.isDestroyed())mainWindow.setTitleBarOverlay({color:theme==='dark'?'#17181c':'#e9eaed',symbolColor:theme==='dark'?'#eeeef2':'#202126',height:44});
+  return true;
+});
 handle('fadeyin:close-choice',async(_event,choice)=>{
   if(process.platform!=='win32')throw new Error('当前平台不使用托盘关闭选项');
   if(!closePromptPending)throw new Error('没有待处理的关闭请求');

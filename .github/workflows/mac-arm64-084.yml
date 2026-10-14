@@ -1,0 +1,49 @@
+name: Build ARM64 0.8.4
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  mac:
+    runs-on: macos-15
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: desktop
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci
+      - name: Native ARM64 FFprobe
+        run: |
+          mkdir -p node_modules/ffprobe-static/bin/darwin/arm64
+          curl --fail --location --retry 3 https://github.com/eugeneware/ffmpeg-static/releases/download/b6.0/ffprobe-darwin-arm64 -o node_modules/ffprobe-static/bin/darwin/arm64/ffprobe
+          chmod +x node_modules/ffprobe-static/bin/darwin/arm64/ffprobe
+      - name: Regression checks
+        run: |
+          npm run check
+          node scripts/test-hardening.cjs
+          node scripts/test-sequence-flow.cjs
+          node scripts/test-project-fields.cjs
+          node scripts/test-timeline-notes.cjs
+      - name: Build ad-hoc signed app
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+        run: npx electron-builder --mac dmg zip --arm64 --publish never -c.mac.identity=-
+      - name: Verify ARM64 bundle
+        env:
+          EXPECTED_ARCH: arm64
+        run: |
+          node scripts/check-mac.cjs
+          codesign --verify --deep --strict --verbose=2 dist/mac-arm64/片拉拉.app
+          shasum -a 256 dist/*.dmg dist/*.zip > dist/SHA256-arm64.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Pianlala-macOS-arm64-0.8.4
+          path: |
+            desktop/dist/*.dmg
+            desktop/dist/*.zip
+            desktop/dist/SHA256-arm64.txt
+          retention-days: 30

@@ -1,0 +1,261 @@
+/* macOS-inspired desktop system: content surfaces stay opaque; navigation carries material. */
+html[data-design=mac]{--bg:#e9eaed;--panel:#fafafb;--text:#202126;--muted:#666a74;--line:#d9dce2;--accent:#0067d9;--accent2:#e2edfc;--dark:#191b20;--danger:#c83238;--surface-raised:#fff;--surface-input:#f0f1f4;--hover:#e5e8ed;--glass:rgba(249,250,252,.87);--shadow:0 12px 38px #1e27351c;--radius-control:8px;--control-height:30px;--type-body:13px;--type-label:12px;--type-meta:11px;--type-section:13px;--icon-size:18px;--icon-stroke:1.65;color-scheme:light}
+html[data-design=mac][data-theme=dark]{--bg:#17181c;--panel:#222328;--text:#eeeef2;--muted:#a3a7b2;--line:#393b44;--accent:#70b4ff;--accent2:#263c57;--dark:#0f1013;--danger:#ff8c92;--surface-raised:#34363e;--surface-input:#2b2d34;--hover:#353842;--glass:rgba(40,42,49,.91);--shadow:0 16px 48px #0005;color-scheme:dark}
+html[data-design=mac] body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI','PingFang SC','Microsoft YaHei UI',sans-serif;font-size:13px;line-height:1.5;background:var(--bg);color:var(--text);letter-spacing:0}
+html[data-design=mac] :is(button,input,select,textarea){font-family:inherit;font-size:12px;line-height:1.4;caret-color:var(--accent)}
+html[data-design=mac] ::selection{background:var(--accent2);color:var(--text)}
+html[data-design=mac] :focus-visible{outline:3px solid color-mix(in srgb,var(--accent) 70%,transparent);outline-offset:2px}
+html[data-design=mac] .main{padding:0 12px 12px;height:100dvh;overflow:hidden}
+html[data-design=mac] .main .wrap{height:100%;max-width:none;display:flex;flex-direction:column;gap:0;min-height:0}
+html[data-design=mac] .btn{min-height:30px;border:0;border-radius:8px;background:var(--surface-input);color:var(--text);padding:6px 11px;font-size:12px;font-weight:500;box-shadow:none;transition:background-color .16s,color .16s,box-shadow .16s;white-space:nowrap}
+html[data-design=mac] .btn:hover:not(:disabled){background:var(--hover);filter:none}
+html[data-design=mac] .btn.primary{background:#006bdc;color:#fff;border-color:transparent;font-weight:600}
+html[data-design=mac] .btn.primary:hover:not(:disabled){background:#005dbf;color:#fff}
+html[data-design=mac] .btn.danger{color:var(--danger)}
+html[data-design=mac] .confirmDialog .btn.danger{background:var(--danger);color:var(--bg)}
+html[data-design=mac] .btn:disabled{opacity:.4}
+html[data-design=mac] :is(.macIcon,.workbenchIcon,.btn svg){width:18px;height:18px;stroke:currentColor;stroke-width:1.65;stroke-linecap:round;stroke-linejoin:round;fill:none;flex-shrink:0}
+html[data-design=mac] .macIconButton{display:inline-flex;align-items:center;justify-content:center;width:30px;min-width:30px;height:30px;padding:6px}
+html[data-design=mac] .macTextButton{display:inline-flex;align-items:center;justify-content:center;gap:7px}
+html[data-design=mac] .editorTopbar{height:44px;min-height:44px;gap:20px;padding:5px 4px;margin:0;border:0;background:transparent;display:flex;align-items:center;overflow:visible}
+html[data-design=mac][data-platform=win32] .editorTopbar{padding-right:140px}
+html[data-design=mac][data-platform=darwin] .editorTopbar{padding-left:80px}
+html[data-design=mac] .macDocumentTitle{min-width:260px;max-width:none;flex:1;display:flex;align-items:center;gap:8px;line-height:1.45;overflow:hidden}
+html[data-design=mac] .macDocumentTitle b{font-size:14px;font-weight:650}
+html[data-design=mac] .macBrandLogo{width:24px;height:24px;object-fit:contain;flex:0 0 24px}
+html[data-design=mac] .fieldSettingsButton{margin-left:auto;flex:none}
+html[data-design=mac] #projectFieldSettings>p{font-size:12px;color:var(--muted)}
+html[data-design=mac] .projectFieldList{display:grid;gap:10px;margin:12px 0}
+html[data-design=mac] .projectFieldRow{display:grid;grid-template-columns:minmax(0,1fr) 30px 30px 54px;gap:6px;padding:10px;background:var(--surface-input);border-radius:9px}
+html[data-design=mac] .projectFieldRow .btn{padding:5px}
+html[data-design=mac] .projectFieldRow textarea{grid-column:1/-1;resize:vertical}
+html[data-design=mac] .fieldHidden{opacity:.65}
+html[data-design=mac] #projectFieldSettings :is(input,textarea,select){min-width:0;width:100%;border:1px solid var(--line);padding:7px;border-radius:6px;background:var(--panel);color:var(--text)}
+html[data-design=mac] .projectFieldAdd{display:grid;grid-template-columns:minmax(0,1fr) 100px 54px;gap:6px}
+html[data-design=mac] #timelineNotes{margin:12px 0 0;padding:14px 16px;border:1px solid var(--line);border-radius:12px;background:var(--panel)}
+html[data-design=mac] #timelineNotes header{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+html[data-design=mac] #timelineNotes h2{font-size:13px;margin:0;font-weight:600}
+html[data-design=mac] #timelineNotes header .btn{margin-left:auto}
+html[data-design=mac] .timelineNoteTime{font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums}
+html[data-design=mac] .timelineNoteFields{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+html[data-design=mac] .timelineNoteField{display:flex;flex-direction:column;gap:6px;font-size:12px;color:var(--muted);min-width:0}
+html[data-design=mac] .timelineNoteField :is(input,textarea){width:100%;min-width:0;border:1px solid var(--line);border-radius:8px;padding:8px;background:var(--surface-input);color:var(--text);font:inherit;resize:vertical}
+html[data-design=mac] .timelineNoteEmpty{color:var(--muted);font-size:12px;margin:0}
+@media(max-width:1100px){html[data-design=mac] .timelineNoteFields{grid-template-columns:repeat(3,minmax(0,1fr))}}
+html[data-design=mac] .macDocumentTitle span{font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+html[data-design=mac] .dockBar .modeSwitch{display:flex;padding:3px;gap:2px;background:var(--surface-input);border:0;border-radius:10px;flex:0 0 auto;width:auto;-webkit-app-region:no-drag}
+html[data-design=mac] .dockBar .modeSwitch .modeBtn{display:flex;align-items:center;justify-content:center;width:auto;min-width:68px;height:30px;min-height:30px;gap:6px;padding:5px 9px;border:0;border-radius:7px;background:transparent;font-size:12px;font-weight:600;color:var(--muted);transition:background .16s,color .16s}
+html[data-design=mac] .dockBar .modeBtn[aria-selected=true]{background:var(--surface-raised);color:var(--text);box-shadow:0 1px 5px #00000012}
+html[data-design=mac] .macSaveState{display:inline-flex;align-items:center;gap:6px;margin-left:14px;font-variant-numeric:tabular-nums}
+html[data-design=mac] .macSaveState[data-state=saved]::before{content:'✓';display:inline-grid;place-items:center;width:14px;height:14px;border-radius:50%;background:#078679;color:#fff;font-size:10px}
+html[data-design=mac] .macSaveState[data-state=error]{color:var(--danger)}
+html[data-design=mac] .editorTopbar button::before{display:none}
+html[data-design=mac] .editorTopbar .macUtilities{display:flex;justify-content:flex-end;gap:6px;flex:1;min-width:0;width:auto;border:0;padding:0}
+html[data-design=mac] .editorTopbar .macUtilities .btn{height:34px;min-height:34px;min-width:34px;border:0;border-radius:10px;background:transparent}
+html[data-design=mac] .editorTopbar .macUtilities .btn:hover{background:var(--hover)}
+html[data-design=mac] .editorTopbar .macUtilities .toolbarExport{width:auto;padding:7px 14px;margin-left:5px;background:#006bdc;color:#fff}
+html[data-design=mac] .dockPanel{border:0;border-radius:12px;background:var(--panel);box-shadow:none}
+html[data-design=mac] .dockBar{display:flex;align-items:center;gap:8px;padding:8px 12px;min-height:44px;background:transparent;border-bottom:1px solid var(--line);overflow:hidden;font-weight:600;font-size:12px;flex-shrink:0}
+html[data-design=mac] .dockBar>.workbenchIcon{width:10px;height:14px;opacity:.3}
+html[data-design=mac] .dockBar>span{font-size:12px}
+html[data-design=mac] .dockGrip{flex-basis:8px;border-radius:4px}
+html[data-design=mac] .dockGrip:hover{background:color-mix(in srgb,var(--accent) 25%,transparent)}
+html[data-design=mac] #workspace.dockWorkspace{background:transparent;overflow:auto;gap:0}
+html[data-design=mac] .dockPanel[data-panel=library]{background:var(--glass)}
+html[data-design=mac] .dockPanel[data-panel=library] .projectSidebar{background:transparent;overflow:hidden;padding:10px!important;gap:10px}
+html[data-design=mac] .projectSidebar .projectBrand{display:none}
+html[data-design=mac] #newProjectBtn{margin-left:auto;background:transparent}
+html[data-design=mac] .macSearch{height:32px;display:flex;align-items:center;gap:7px;background:var(--surface-input);border-radius:8px;padding:0 9px;flex:none;color:var(--muted)}
+html[data-design=mac] .macSearch svg{width:15px;height:15px}
+html[data-design=mac] .macSearch input{width:100%;min-width:0;border:0;outline:none;background:transparent;color:var(--text);padding:6px 0}
+html[data-design=mac] .macSearch:focus-within{box-shadow:0 0 0 2px var(--accent)}
+html[data-design=mac] .projectLibraryTools{display:flex;flex-wrap:nowrap;gap:6px;align-items:center}
+html[data-design=mac] .projectLibraryTools select:not([hidden]){min-width:0;flex:1;font-size:11px;height:28px;border:0;background:transparent;padding:0 4px;color:var(--muted)}
+html[data-design=mac] .macViewSwitch{display:flex;gap:1px;flex-shrink:0}
+html[data-design=mac] .macViewSwitch .btn{width:26px;min-width:26px;height:26px;min-height:26px;padding:5px;background:transparent;border-radius:6px;color:var(--muted)}
+html[data-design=mac] .macViewSwitch .btn[aria-pressed=true]{background:var(--surface-raised);color:var(--text)}
+html[data-design=mac] #projectList{overflow:auto;min-height:0;flex:1;gap:3px;padding:0 1px;scrollbar-gutter:stable}
+html[data-design=mac] .projectItem{display:grid;grid-template-columns:48px minmax(0,1fr);column-gap:10px;align-content:center;min-height:70px;padding:10px 22px 10px 8px;border:0;background:transparent;border-radius:9px;color:var(--text)}
+html[data-design=mac] .projectItem.active{background:var(--accent2);box-shadow:none}
+html[data-design=mac] .projectItem:hover{background:var(--hover)}
+html[data-design=mac] .projectCover{width:48px;height:46px;aspect-ratio:auto;object-fit:cover;border-radius:6px;grid-row:1/3;background:var(--surface-input)}
+html[data-design=mac] .projectItem b{font-size:12px;font-weight:600;line-height:1.5;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+html[data-design=mac] .projectItem small{font-size:10px;color:var(--muted)}
+html[data-design=mac] .projectDelete{width:20px;min-width:20px;height:20px;min-height:20px;padding:3px;right:3px;top:5px;background:transparent}
+html[data-design=mac] .projectDelete svg{width:13px;height:13px}
+html[data-design=mac] .projectCoverEdit{width:20px;height:20px;padding:3px;right:3px;bottom:5px;border:0;background:var(--panel);border-radius:5px;color:var(--muted)}
+html[data-design=mac] #projectList[data-view=grid]{grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px}
+html[data-design=mac] #projectList[data-view=grid] .projectItem{display:flex;padding:7px;gap:4px;min-height:0}
+html[data-design=mac] #projectList[data-view=grid] .projectCover{width:100%;height:88px}
+html[data-design=mac] .macNoMatches{padding:16px 5px;color:var(--muted);font-size:12px;text-align:center}
+html[data-design=mac] .dockPanel[data-panel=player]{container-type:inline-size;container-name:preview}
+html[data-design=mac] .dockPanel[data-panel=player] .dockBar{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);border:0;padding:5px 10px;gap:8px;min-height:46px}
+html[data-design=mac] .macPreviewIdentity{display:flex;align-items:center;gap:4px;min-width:0}
+@container preview (max-width:650px){html[data-design=mac] #videoMeta{visibility:hidden}html[data-design=mac] .macPreviewIdentity>span{display:none}}
+html[data-design=mac] #pickBtn{margin-left:4px;background:transparent}
+html[data-design=mac] #videoMeta{margin-left:auto;color:var(--muted);font-size:10px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+html[data-design=mac] #videoBox{border:0;border-radius:0;background:var(--panel);box-shadow:none;overflow:hidden}
+html[data-design=mac] #videoBox .videoHead{display:none!important}
+html[data-design=mac] #workspace.dockWorkspace .previewWrap{position:relative;margin:0 10px;width:calc(100% - 20px);border-radius:8px;overflow:hidden;background:#080a0d;min-height:100px}
+html[data-design=mac] #video{background:#080a0d}
+html[data-design=mac] .macWelcome{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#ebedf2;gap:10px;background:#101217;padding:20px;text-align:center}
+html[data-design=mac] .macWelcome>svg{width:38px;height:38px;stroke-width:1.25;color:#949dad;margin-bottom:6px}
+html[data-design=mac] .macWelcome h1{font-size:20px;font-weight:600;line-height:1.4;margin:0}
+html[data-design=mac] .macWelcome p{font-size:12px;color:#a3a9b5;margin:0 0 6px}
+html[data-design=mac] .macWelcome .btn{background:#303640;color:#fff;padding:8px 16px;border-radius:9px}
+html[data-design=mac] .macTransport{flex:none;padding:9px 14px 8px;min-width:0}
+html[data-design=mac] .macPlayerScrub{width:100%;height:14px;display:block;cursor:ew-resize;margin:0 0 5px;accent-color:var(--accent)}
+html[data-design=mac] input[type=range]{accent-color:var(--accent);cursor:pointer}
+html[data-design=mac] .macTransportRow{display:flex;align-items:center;justify-content:space-between;position:relative;gap:8px;min-height:34px}
+html[data-design=mac] .macTimecode{font-size:10px;font-weight:500;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap;flex:1}
+html[data-design=mac] .macPlayback{display:flex;align-items:center;gap:1px}
+html[data-design=mac] .macPlayback .btn{background:transparent;width:28px;min-width:28px;height:28px;padding:6px}
+html[data-design=mac] .macPlayback .macMainPlay{width:34px;height:34px;min-width:34px;background:var(--surface-input);border-radius:50%;margin:0 3px}
+html[data-design=mac] .macMainPlay svg{width:20px;height:20px}
+html[data-design=mac] .macPlayerUtilities{display:flex;justify-content:flex-end;align-items:center;gap:2px;flex:1}
+html[data-design=mac] .macPlayerUtilities .btn{background:transparent;width:28px;min-width:28px;height:28px;padding:5px}
+html[data-design=mac] .macPlayerUtilities input{width:46px;height:16px;margin-right:4px}
+html[data-design=mac] #transportStatus{position:absolute;right:0;bottom:41px;font-size:10px;border:0;padding:2px 6px;background:var(--panel);color:var(--muted);border-radius:4px;pointer-events:none}
+html[data-design=mac] #videoBox:fullscreen{background:#080a0d;padding:16px;display:flex;flex-direction:column}
+html[data-design=mac] #videoBox:fullscreen .previewWrap{flex:1}
+html[data-design=mac] #videoBox:fullscreen .macTransport{background:var(--panel);border-radius:10px}
+html[data-design=mac] #workspace.dockWorkspace #timelineArea{padding:12px;scrollbar-gutter:stable}
+html[data-design=mac] #timelineArea #timelineCard{padding:0;background:transparent}
+html[data-design=mac] .timelineHead{margin:0 0 8px;min-height:0}
+html[data-design=mac] .timelineHead>b{display:none}
+html[data-design=mac] .timelineTools{display:flex;flex-wrap:wrap;width:auto!important;gap:5px}
+html[data-design=mac] .timelineTools .btn{font-size:11px;min-height:28px;padding:5px 8px}
+html[data-design=mac] .brightnessPanel{border:0;border-radius:8px;background:#161b22;margin-top:8px}
+html[data-design=mac] .brightnessMeta{background:var(--surface-input);padding:8px;font-size:11px;gap:6px}
+html[data-design=mac] .overviewTitle{display:none}
+html[data-design=mac] .metricTabs{padding:0;gap:2px;border:0;background:transparent!important;flex-wrap:wrap;order:0!important}
+html[data-design=mac] .metricBtn{font-size:10px;font-weight:500;line-height:1.5;padding:4px 6px;border-radius:5px;color:var(--muted)}
+html[data-design=mac] .metricBtn.active{color:var(--text);background:var(--surface-raised)}
+html[data-design=mac] .metricSummary{font-size:10px;width:100%;margin:0!important}
+html[data-design=mac] .brightnessSvg{height:95px}
+html[data-design=mac] .overviewReadout{background:var(--surface-input);font-size:10px}
+html[data-design=mac] .timelineDockEmpty{padding:14px 4px;text-align:left}
+html[data-design=mac] .timelineDockEmpty strong{display:block;font-size:13px;font-weight:600;color:var(--text);margin:0 0 8px}
+html[data-design=mac] .timelineDockEmpty span{display:block;font-size:12px;line-height:1.7;margin:0;color:var(--muted)}
+html[data-design=mac] .dockPanel[data-panel=study] .dockBar{flex-wrap:nowrap;min-height:48px;padding:8px 14px;gap:12px}
+html[data-design=mac] .macEditTools{display:flex;align-items:center;gap:2px;flex-shrink:0}
+html[data-design=mac] .macEditTools .btn{background:transparent}
+html[data-design=mac] .macEditTools .btn.active{background:var(--accent2);color:var(--accent)}
+html[data-design=mac] .macEditTools #undoBtn{margin-left:8px}
+html[data-design=mac] .detectionToolbar{display:flex;align-items:center;gap:4px;border:0;padding:0;margin:0;flex-shrink:0}
+html[data-design=mac] .detectionToolbar #analyzeBtn{padding:6px 12px;min-height:30px;font-size:12px;border-radius:8px}
+html[data-design=mac] .detectionToolbar #cancelBtn{font-size:12px}
+html[data-design=mac] .dockBar .resultsHead{min-width:0;flex:1}
+html[data-design=mac] .dockBar #footer{display:none!important}
+html[data-design=mac] .thumbControls{gap:4px;white-space:nowrap;margin-left:auto}
+html[data-design=mac] .thumbControls>span{display:none}
+html[data-design=mac] .thumbControls input{width:65px}
+html[data-design=mac] .thumbControls .btn{width:25px;min-width:25px;height:25px;min-height:25px;padding:4px;background:transparent}
+html[data-design=mac] .macSceneTabs{display:flex;align-items:center;gap:3px;flex-shrink:0;overflow:auto;padding:5px 14px;border-bottom:1px solid var(--line);background:transparent;min-height:36px}
+html[data-design=mac] .sceneTab{min-height:25px;font-size:11px;padding:4px 10px;border:0;border-radius:6px;background:transparent;color:var(--muted)}
+html[data-design=mac] .sceneTab.active{background:var(--accent2);color:var(--accent);border:0}
+html[data-design=mac] #workspace.dockWorkspace #studyArea{padding:0;overflow:auto;scrollbar-gutter:stable}
+html[data-design=mac] #rows{padding:16px;gap:16px;grid-template-columns:repeat(auto-fill,minmax(min(var(--thumb-width,240px),100%),1fr))}
+html[data-design=mac] #rows .shotRow{padding:0;border:0;background:transparent;gap:7px;border-radius:8px;box-shadow:none}
+html[data-design=mac] #rows .shotRow.selected{background:var(--accent2);outline:2px solid var(--accent);outline-offset:5px}
+html[data-design=mac] #rows .shotNum{padding:0 2px;background:transparent;min-height:0}
+html[data-design=mac] #rows .shotNum b{font-size:12px;font-weight:600}
+html[data-design=mac] #rows .shotNum small{font-size:11px}
+html[data-design=mac] #rows .thumb{border-radius:8px;max-height:260px}
+html[data-design=mac] .sharedShotPreview{border-radius:8px;background:#0d1014}
+html[data-design=mac] .sharedShotPreview .framePlayOverlay{width:44px;min-width:44px;height:44px;padding:11px;border:0;background:#f3f5f2ed;color:#15171d;box-shadow:0 3px 12px #0003}
+html[data-design=mac] .sharedShotPreview .framePlayOverlay svg{fill:currentColor;stroke:none;width:24px;height:24px}
+html[data-design=mac] .shotCornerActions .btn{background:#1e232dd9;color:#fff;border:0;border-radius:7px;width:28px;min-width:28px;height:28px;padding:6px;backdrop-filter:blur(12px)}
+html[data-design=mac] #rows .time{font-size:10px;padding:0 2px;font-variant-numeric:tabular-nums;color:var(--muted)}
+html[data-design=mac] #rows .time b{font-weight:500;color:var(--text)}
+html[data-design=mac] #rows .time small{display:none}
+html[data-design=mac] .shotFrameTrack{padding:0 2px;margin-top:0;gap:2px}
+html[data-design=mac] .shotFrameTrack small{font-size:10px;color:var(--muted)}
+html[data-design=mac] .shotFrameTrack input{height:12px}
+html[data-design=mac] .macStudyEmpty{min-height:180px;height:100%;padding:35px 20px;display:flex;align-items:center;justify-content:center;flex-direction:column;text-align:center;gap:8px;color:var(--muted)}
+html[data-design=mac] .macStudyEmpty svg{width:28px;height:28px;color:var(--muted);stroke-width:1.3;margin-bottom:4px}
+html[data-design=mac] .macStudyEmpty h2{font-size:15px;font-weight:600;color:var(--text);margin:0}
+html[data-design=mac] .macStudyEmpty p{font-size:12px;margin:0}
+html[data-design=mac] #progressWrap{margin:0;padding:8px 14px;background:var(--accent2);flex-shrink:0}
+html[data-design=mac] #progressWrap .bar{height:3px;margin-top:4px;background:var(--line)}
+html[data-design=mac] #progressWrap .progressText{font-size:11px;color:var(--text)}
+html[data-design=mac] .logTableWrap{max-height:none;overflow:visible}
+html[data-design=mac] .logTable :is(th,td){border-right:0;border-bottom:1px solid var(--line)}
+html[data-design=mac] .logTable th{padding:10px 12px!important;font-size:11px;font-weight:600;background:var(--surface-input)}
+html[data-design=mac] .logTable td{padding:12px!important;background:var(--panel)}
+html[data-design=mac] .logTable tr.lapCurrentShot td{background:var(--accent2)}
+html[data-design=mac] :is(.lapChoice,.lapText){background:transparent!important;border-color:transparent;border-radius:6px;color:var(--text);font-size:12px;min-height:32px}
+html[data-design=mac] :is(.lapChoice,.lapText):hover{border-color:var(--line);background:var(--surface-input)!important}
+html[data-design=mac] :is(.lapChoice,.lapText):focus{background:var(--surface-raised)!important;border-color:var(--accent)}
+html[data-design=mac] .lapTime{font-size:10px;line-height:1.7;color:var(--muted)}
+html[data-design=mac] .columnGrip{font-size:0;margin-right:0}
+html[data-design=mac] #trackMode{height:100%;min-height:250px;padding:10px 0;background:var(--panel)}
+html[data-design=mac] .trackControls{padding:0 16px 10px;font-size:11px}
+html[data-design=mac] .trackViewport{border:0;border-radius:0;background:var(--surface-input);min-height:210px}
+html[data-design=mac] .trackClip{background:#355477;border-color:#607892;border-radius:5px;color:#fff;overflow:hidden}
+html[data-design=mac] .trackClip.selected{outline:2px solid var(--accent);outline-offset:-2px;box-shadow:none}
+html[data-design=mac] .trackClip.densityTiny{border-right-color:transparent}
+html[data-design=mac] .trackWave path{fill:#6b9a84}
+html[data-design=mac] .trackLabel{background:var(--surface-raised);color:var(--muted);border-radius:4px;font-size:10px}
+html[data-design=mac] .toolbarPopover{border:0;border-radius:16px;padding:18px;margin:0;background:var(--glass);color:var(--text);box-shadow:var(--shadow);backdrop-filter:blur(24px) saturate(130%);overflow:auto;animation:macPanelIn .16s ease-out}
+html[data-design=mac] .toolbarPopover::backdrop{background:transparent;backdrop-filter:none}
+html[data-design=mac] .toolbarPopover>header{display:flex;align-items:center;justify-content:space-between;padding:0 0 14px;margin:0;gap:12px;border-bottom:1px solid var(--line)}
+html[data-design=mac] .toolbarPopover h2{font-size:16px;font-weight:650;letter-spacing:-.01em;margin:0}
+html[data-design=mac] .toolbarPopover h3{font-size:12px;font-weight:600;margin:0 0 10px}
+html[data-design=mac] .toolbarPopover header .btn{background:var(--surface-input);width:26px;min-width:26px;height:26px;min-height:26px;padding:5px;border-radius:50%}
+html[data-design=mac] #layoutPopover{padding:18px!important}
+html[data-design=mac] #layoutPopover h2{display:block}
+html[data-design=mac] #layoutPopover .layoutQuick{padding:10px 0}
+html[data-design=mac] #layoutPopover .settingsRow{display:grid;gap:8px;margin:16px 0;font-size:12px}
+html[data-design=mac] #layoutPopover .settingsRow:has(#savedLayouts){display:none}
+html[data-design=mac] .layoutQuick{padding:8px 0;display:grid;gap:3px}
+html[data-design=mac] .layoutMenuItem{width:100%;justify-content:flex-start;text-align:left;border-radius:7px;background:transparent;font-size:12px;min-height:32px;padding:7px 10px}
+html[data-design=mac] .layoutMenuItem:hover{background:var(--accent2);color:var(--accent)}
+html[data-design=mac] :is(input[type=text],input[type=number],input[type=date],input[type=search],select,textarea){color:var(--text)}
+html[data-design=mac] :is(.select,.input,.metaField input,.metaField textarea,#layoutName,.sceneForm input,.sceneForm select,.macParameters input[type=number]){border:1px solid var(--line);background:var(--surface-input);border-radius:8px;min-height:32px;font-size:12px;line-height:1.5;padding:6px 9px}
+html[data-design=mac] .macParameters .field{display:block;float:none;width:auto;padding:0;margin:18px 0}
+html[data-design=mac] .macParameters .labelRow{display:flex;justify-content:space-between;margin-bottom:8px;font-size:12px}
+html[data-design=mac] .macParameters .labelRow b{color:var(--accent)}
+html[data-design=mac] .macParameters input[type=range]{width:100%;display:block}
+html[data-design=mac] .macParameters .frameInputs{display:flex;gap:8px;align-items:center}
+html[data-design=mac] .macParameters .fpsLabel{display:flex;justify-content:space-between;align-items:center;margin:12px 0;font-size:12px}
+html[data-design=mac] .macParameters input[type=number]{width:100px}
+html[data-design=mac] .macParameters #frameHint{color:var(--muted);font-size:11px}
+html[data-design=mac] #globalSettings section{padding:18px 0;border:0;border-bottom:1px solid var(--line)}
+html[data-design=mac] #globalSettings section:last-child{border:0;padding-bottom:0}
+html[data-design=mac] #settingsTheme .themeSwitch{display:flex;width:100%;gap:4px;padding:4px;border:0;background:var(--surface-input);border-radius:10px}
+html[data-design=mac] #settingsTheme .themeBtn{display:flex;flex:1;align-items:center;justify-content:center;gap:6px;width:auto;min-height:36px;padding:8px;color:var(--muted);font-size:11px}
+html[data-design=mac] #settingsTheme .themeBtn.active{background:var(--surface-raised);box-shadow:0 1px 5px #0001;color:var(--text)}
+html[data-design=mac] #globalSettings :is(.privacy,#projectHint){font-size:12px;color:var(--muted);border:0;padding:0;margin:0 0 10px;line-height:1.8}
+html[data-design=mac] .editorDialogTabs{padding:4px;margin:14px 0 4px;gap:3px;border:0;border-radius:9px;background:var(--surface-input);display:flex;flex-wrap:nowrap}
+html[data-design=mac] .editorDialogTabs .btn{flex:1;min-height:29px;font-size:11px;padding:5px 8px;background:transparent;border-radius:6px;color:var(--muted)}
+html[data-design=mac] .editorDialogTabs .btn[aria-selected=true]{background:var(--surface-raised);color:var(--text);box-shadow:0 1px 4px #00000010}
+html[data-design=mac] .editorDialogPane{padding:10px 0}
+html[data-design=mac] .shortcutGrid{grid-template-columns:1fr;min-height:0;gap:0}
+html[data-design=mac] .shortcutGrid>div{min-height:36px;border:0;font-size:12px}
+html[data-design=mac] .shortcutGrid kbd{font-size:11px;background:var(--surface-input);border:0;box-shadow:0 1px 0 var(--line);padding:3px 6px;border-radius:4px}
+html[data-design=mac] .editorDialog>footer{padding:12px 0 0;margin-top:6px;border-top:1px solid var(--line);font-size:11px;line-height:1.6}
+html[data-design=mac] .exportWindowBody{display:flex;flex-direction:column;min-height:0;gap:0}
+html[data-design=mac] .exportPreview{display:grid;grid-template-columns:72px minmax(0,1fr);gap:3px 12px;padding:16px 0;background:transparent;align-content:center}
+html[data-design=mac] .exportPreview img{width:72px;height:54px;border-radius:6px;grid-row:1/3;object-fit:contain}
+html[data-design=mac] .exportPreview b{font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;align-self:end}
+html[data-design=mac] .exportPreview span{font-size:11px}
+html[data-design=mac] .exportFields{gap:10px}
+html[data-design=mac] .exportFields .btn{min-height:36px;text-align:left;justify-content:flex-start;font-size:12px}
+html[data-design=mac] #projectNotesPopover .diaryMeta{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:16px 0 0;background:transparent;border:0}
+html[data-design=mac] #projectNotesPopover .metaField{font-size:11px;gap:5px}
+html[data-design=mac] #projectNotesPopover .metaField:has([data-lap-meta=title]),html[data-design=mac] #projectNotesPopover .metaField.wide{grid-column:1/-1}
+html[data-design=mac] #projectNotesPopover textarea{min-height:100px}
+html[data-design=mac] .confirmDialog:not(.toolbarPopover){border:0;border-radius:18px;padding:24px;background:var(--panel);color:var(--text);box-shadow:var(--shadow);width:min(440px,calc(100vw - 32px))}
+html[data-design=mac] .confirmDialog h2{font-size:17px;margin:0 0 14px}
+html[data-design=mac] .confirmDialog::backdrop{background:#0005;backdrop-filter:blur(3px)}
+html[data-design=mac] .lapPresetMenu,html[data-design=mac] .projectContextMenu{border:0;background:var(--glass);color:var(--text);border-radius:10px;box-shadow:var(--shadow);padding:5px;backdrop-filter:blur(20px)}
+html[data-design=mac] :is(.lapPresetMenu,.projectContextMenu) .btn{background:transparent;text-align:left;border-radius:5px}
+html[data-design=mac] :is(.lapPresetMenu,.projectContextMenu) .btn:hover{background:var(--accent2)}
+html[data-design=mac] .toast{background:var(--text);color:var(--panel);border:0;border-radius:12px;box-shadow:var(--shadow);padding:12px 18px;font-size:12px;z-index:9999}
+html[data-design=mac] [hidden]{display:none!important}
+@keyframes macPanelIn{from{opacity:0;transform:translateY(-5px)}to{opacity:1;transform:translateY(0)}}
+@media(max-width:1100px){html[data-design=mac] .editorTopbar{gap:10px}html[data-design=mac] .macDocumentTitle{max-width:20%}html[data-design=mac] .editorTopbar .modeSwitch .modeBtn{min-width:70px;padding:7px 9px}html[data-design=mac] .macTimecode{font-size:9px}html[data-design=mac] .macPlayerUtilities input{display:none}html[data-design=mac] .dockPanel[data-panel=study] .dockBar{gap:7px}}
+@media(max-width:760px){html[data-design=mac] .main{height:auto;min-height:100dvh;overflow:visible;padding:0 8px 8px}html[data-design=mac] .main .wrap{height:auto}html[data-design=mac] .editorTopbar{flex-wrap:wrap;height:auto;min-height:100px;padding:10px 4px;gap:8px}html[data-design=mac] .macDocumentTitle{max-width:none;flex:1}html[data-design=mac] .editorTopbar .modeSwitch{order:3;width:100%}html[data-design=mac] .editorTopbar .modeSwitch .modeBtn{flex:1}html[data-design=mac] .editorTopbar .macUtilities{flex:none;gap:1px}html[data-design=mac] .editorTopbar .macUtilities .btn{min-width:30px;width:30px;height:30px;padding:6px}html[data-design=mac] .editorTopbar .macUtilities .toolbarExport{width:auto;padding:6px 10px}html[data-design=mac] #workspace.dockWorkspace{overflow:visible}html[data-design=mac] .dockPanel[data-panel=library] .projectSidebar{max-height:240px}html[data-design=mac] .dockPanel[data-panel=study] .dockBar{flex-wrap:wrap;overflow:visible}html[data-design=mac] .dockBar .resultsHead{flex:1;min-width:100px}html[data-design=mac] .macTransportRow{flex-wrap:wrap}html[data-design=mac] .macTimecode{flex-basis:100%;text-align:center}html[data-design=mac] .macPlayback{margin:auto}html[data-design=mac] .macPlayerUtilities{flex:0}html[data-design=mac] .macWelcome h1{font-size:18px}html[data-design=mac] #workspace.dockWorkspace .previewWrap{min-height:220px}html[data-design=mac] .macStudyEmpty{min-height:180px}html[data-design=mac] .macSceneTabs{max-width:100%}}
+@media(prefers-reduced-transparency:reduce){html[data-design=mac] .toolbarPopover{background:var(--panel);backdrop-filter:none}}
+@media(prefers-reduced-motion:reduce){html[data-design=mac] *{animation:none!important;transition:none!important}}

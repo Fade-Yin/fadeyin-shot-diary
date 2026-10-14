@@ -29,7 +29,7 @@ document.querySelector('.main .wrap').prepend(topbar);
 window.PianlalaPopover=(panel,trigger)=>{
  panel.classList.add('toolbarPopover');panel.setAttribute('popover','auto');
  trigger.setAttribute('aria-controls',panel.id);trigger.setAttribute('aria-expanded','false');
- const position=()=>{const r=trigger.getBoundingClientRect(),width=Math.min(400,Math.max(0,innerWidth-24));panel.style.width=width+'px';panel.style.left=Math.max(12,Math.min(r.right-width,innerWidth-width-12))+'px';panel.style.top=(r.bottom+8)+'px';panel.style.maxHeight=Math.max(80,innerHeight-r.bottom-20)+'px'};
+ const position=()=>{const r=trigger.getBoundingClientRect(),width=Math.min(Number(panel.dataset.popoverWidth)||400,Math.max(0,innerWidth-24));panel.style.width=width+'px';panel.style.left=Math.max(12,Math.min(r.right-width,innerWidth-width-12))+'px';panel.style.top=(r.bottom+8)+'px';panel.style.maxHeight=Math.max(80,innerHeight-r.bottom-20)+'px'};
  panel.addEventListener('beforetoggle',e=>{if(e.newState==='open')position()});
  panel.addEventListener('toggle',e=>trigger.setAttribute('aria-expanded',String(e.newState==='open')));
  window.addEventListener('resize',()=>{if(panel.matches(':popover-open'))position()});
@@ -82,7 +82,7 @@ studyBar.insertBefore(detection,studyBar.querySelector('span').nextSibling);
 $('#reanalyzeBtn').hidden=true;
 const exportBar=document.querySelector('.dockPanel[data-panel="settings"] .dockBar span');exportBar.textContent='导出区';
 document.querySelector('[data-metric="color"]').textContent='Cineprint';
-setInterval(()=>{$('#analyzeBtn').textContent=shots.length?'重新分析':'检测切点'},120);
+setInterval(()=>{const label=shots.length?'重新分析':'检测切点';if($('#analyzeBtn').textContent!==label)$('#analyzeBtn').textContent=label},250);
 const reportGroup=document.createElement('div');reportGroup.className='reportExportGroup';
 const reportHint=document.createElement('p');reportHint.textContent='单文件 HTML · 镜头画面与时间码 · 可分享查看';
 reportGroup.append($('#reportBtn'),reportHint);exports.append(reportGroup);
@@ -92,11 +92,8 @@ const clipsGroup=document.createElement('div');clipsGroup.className='reportExpor
 const clipsHint=document.createElement('p');clipsHint.textContent=desktopApi?'FFmpeg 精确切分 · 保持原始分辨率':'WebM 镜头视频 ZIP · 实时录制';
 const clips=$('#saveClipsBtn');clips.textContent=desktopApi?'导出精确 MP4 镜头':'导出镜头视频 ZIP';clips.classList.remove('hidden');clipsGroup.append(clips,clipsHint);exports.append(clipsGroup);
 setInterval(()=>{for(const button of [clips,$('#reportBtn')])button.disabled=busy||videoLoading||!shots.length},120);
-const settings=$('#globalSettings');const section=document.createElement('section');section.innerHTML='<h3>工作台</h3><label class="settingsRow">界面密度<select class="select" id="uiDensity"><option value="compact">紧凑</option><option value="comfortable">舒适</option></select></label>';
-settings.querySelector('section').after(section);section.append(ai);
-const density=$('#uiDensity');try{density.value=localStorage.getItem('pianlala.ui-density')==='comfortable'?'comfortable':'compact'}catch{}
-function applyDensity(){document.documentElement.dataset.density=density.value;try{localStorage.setItem('pianlala.ui-density',density.value)}catch{toast('界面设置未能保存')}}
-density.onchange=applyDensity;applyDensity();
+ai.hidden=true;$('#projectStorageInfo').append(ai);
+document.documentElement.dataset.density='compact';
 function covers(){
   for(const entry of document.querySelectorAll('.projectEntry')){
     const button=entry.querySelector('.projectItem');if(!button||button.querySelector('.projectCover'))continue;
