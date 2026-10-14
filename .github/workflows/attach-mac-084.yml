@@ -1,0 +1,25 @@
+name: Attach verified Mac 0.8.4 draft
+on:
+  workflow_dispatch:
+permissions:
+  actions: read
+  contents: write
+jobs:
+  attach:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: Pianlala-macOS-arm64-0.8.4
+          run-id: 38498056214
+          github-token: ${{ github.token }}
+          path: mac
+      - name: Verify and attach to draft only
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          test "$(gh release view v0.8.4 --json isDraft --jq .isDraft)" = true
+          cd mac
+          sed 's#dist/##g' SHA256-arm64.txt | sha256sum -c -
+          gh release upload v0.8.4 *.dmg *.zip SHA256-arm64.txt
