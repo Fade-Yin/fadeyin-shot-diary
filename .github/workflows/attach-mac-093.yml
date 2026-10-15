@@ -1,0 +1,35 @@
+name: Attach verified Mac 0.9.3 to release draft
+on:
+  workflow_dispatch:
+    inputs:
+      run_id:
+        required: true
+        default: '38775210402'
+permissions:
+  contents: write
+  actions: read
+jobs:
+  attach:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify build provenance
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BUILD_RUN: ${{ inputs.run_id }}
+        run: |
+          gh api repos/${{ github.repository }}/actions/runs/$BUILD_RUN --jq '.conclusion + " " + .head_sha' > provenance.txt
+          grep -Fx 'success c82d9015468b47f679d17e55d869b14783d6772d' provenance.txt
+          test "$(gh release view v0.9.3 --repo ${{ github.repository }} --json isDraft --jq .isDraft)" = true
+      - uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ github.token }}
+          run-id: ${{ inputs.run_id }}
+          name: Pianlala-macOS-arm64-0.9.3
+          path: downloaded
+      - name: Verify archive hashes and attach
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cd downloaded
+          sed 's|  dist/|  |' SHA256-arm64.txt | sha256sum --check -
+          gh release upload v0.9.3 ./*.dmg ./*.zip SHA256-arm64.txt --repo ${{ github.repository }}
