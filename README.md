@@ -4,20 +4,26 @@
 
 源码已采用 [MIT](LICENSE)，第三方组件保持原有许可，见 [第三方声明](THIRD_PARTY_NOTICES.md)。开发者：B站 Fadeyin。
 
+## 下载最新版
+
+| 平台 | 0.9.3 安装包 |
+| --- | --- |
+| Mac · Apple Silicon（M1 及更新芯片，macOS 12+） | [下载 DMG](https://github.com/Fade-Yin/fadeyin-shot-diary/releases/download/v0.9.3/Pianlala-macOS-arm64-0.9.3.dmg) · [下载 ZIP](https://github.com/Fade-Yin/fadeyin-shot-diary/releases/download/v0.9.3/Pianlala-macOS-arm64-0.9.3.zip) |
+| Windows · x64 | [下载便携版 EXE](https://github.com/Fade-Yin/fadeyin-shot-diary/releases/download/v0.9.3/Pianlala-Windows-Portable-0.9.3.exe) |
+
+[最新发布页与校验文件](https://github.com/Fade-Yin/fadeyin-shot-diary/releases/latest)
+
+Mac 0.9.3 已通过 Developer ID 签名、Apple 公证、公证票据（staple）及 Gatekeeper 检查，见 [构建与验证记录](https://github.com/Fade-Yin/fadeyin-shot-diary/actions/runs/38775210402)。完整 Mac 真机界面交互验收尚未完成。当前 Mac 安装包为 arm64，不适用于 Intel Mac。
+
+## 简介
+
 新版包含系统跟随的浅深色 UI、镜头悬停播放与离开暂停、时间线当前镜头拉片面板、项目独立的自定义字段，以及静帧、镜头 MP4、CSV、拉片日记导出。Mac 版补充原生菜单栏、标准 Command 快捷键与窗口外观联动。
 
 Node.js 22：在 `desktop` 下运行 `npm ci`、`npm start`。
 Windows 打包运行 `npm run build:win`；Apple Silicon Mac 运行 `npm run build:mac:arm64`。
 Actions 的 Build signed Mac ARM64 0.9.3 工作流提供 macOS 原生构建、回归测试、签名与公证检查。
 
-0.9.3 构建要求 Developer ID 签名及 Apple 公证凭据，验证签名、staple 和 Gatekeeper 后才上传安装包。构建产物不自动发布正式版，具体签名与公证结果以该次 Actions 日志为准；旧版本临时签名包不代表新版签名状态。
-二进制发布在第三方对应源码核验完成前保留为草稿；源码可自由获取。
-
-以下为旧版说明，仅供历史参考。
-
 面向电影学习与逐镜分析的本地拉片工具。导入视频，检测镜头切点，浏览中间帧，按场次整理并填写拉片笔记。
-
-当前版本：**0.6.2 预览版**。开发者：Danny。
 
 **AI 功能暂未上线。** AI 按钮保持灰色，提示「功能未上线，敬请稍后」；当前版本不支持填写 API Key 或调用 AI 分析。
 
@@ -29,14 +35,18 @@ Actions 的 Build signed Mac ARM64 0.9.3 工作流提供 macOS 原生构建、�
 - 填写景别、角度、运镜、光色、画面内容、声音和备注；支持常用下拉项与自定义输入。
 - 拖动分析列表表头调整顺序，拖动列边缘调整宽度。
 - 左侧项目库保存镜头、分场与笔记，方便继续拉片。
-- 全片通览：亮度、色彩条码、剪辑密度；音频电平需桌面版。
+- 全片通览：亮度、指纹、剪辑密度及音频电平。
 - 导出包含视频和笔记的单文件拉片日记，或导出飞书兼容 CSV。
 
 ## 开始使用
 
 ### Windows 桌面版
 
-请在 [v0.6.2 下载页](https://github.com/Fade-Yin/fadeyin-shot-diary/releases/tag/v0.6.2) 下载 `FadeYin-Shot-Diary-Windows-Portable-0.6.2.exe`，双击运行即可。已内置 FFmpeg 和 FFprobe，无需另外下载或安装。当前版本尚未进行发布者代码签名。
+使用上方「下载最新版」中的 Windows 便携版 EXE，双击运行即可。已内置 FFmpeg 和 FFprobe，无需另外下载或安装。Windows 版尚未进行发布者代码签名。
+
+### Mac 桌面版
+
+使用上方 Mac DMG，打开后将「片拉拉」拖入「应用程序」。也可下载 ZIP 并解压应用。请选择与设备匹配的 Apple Silicon arm64 版本。
 
 仓库的「Download ZIP」是桌面版源码，不是网页版本，也不是可执行程序。界面文件仅作为 Electron 应用内部资源随 EXE 打包，不提供单独的 HTML 使用方式。
 
@@ -54,9 +64,9 @@ npm start
 
 ## 拉片步骤
 
-1. 点击「选择视频」，或把视频拖入窗口。
-2. 设置检测灵敏度和最短镜头帧数。桌面版读取原片帧率。
-3. 点击「自动检测切点」。进入「拉片模式」本身不会启动检测。
+1. 打开视频，或把视频拖入播放器；新视频会自动创建项目并检测镜头，预览框内可停止检测。
+2. 如需调整结果，设置检测灵敏度和最短镜头帧数，再点击「重新分析」。桌面版读取原片帧率。
+3. 鼠标进入分镜画面即可播放，离开立即暂停，画面和进度保留；再次进入可继续播放。
 4. 检查镜头边界。拖动缩放滑块放大时间线并横向滚动；输入镜头编号点击「定位」。时间线获得焦点后，方向键选择，Shift＋方向键连续多选，回车播放。选择工具可点击镜头，Shift 点击可连续多选；刀片工具用于手动添加切点。快捷键 V 为选择工具，B 为刀片工具。
 5. 选中连续镜头后点击「选中镜头分场」或「建立序列」，填写标题和范围。分场不会自动生成，当前不支持场次范围重叠。
 6. 在场次标签页填写景别、角度、运镜、光色、画面内容、声音和备注。分场封面默认取场次时间中间帧，也可用「当前画面设为封面」更换。
@@ -75,9 +85,9 @@ npm start
 | 拉片日记 | 内嵌原视频、镜头图片、笔记和场次标签；文件较大，手机是否能打开取决于浏览器、编码和可用内存。 |
 | 镜头报告 | 内嵌原视频和镜头卡片，可点击播放镜头。 |
 | 桌面 MP4 | 通过 FFmpeg 重新编码导出镜头片段，保留画面分辨率；不是无损复制。每次自动新建独立子文件夹，避免覆盖。导出期间可点击「取消」停止，已完成的片段保留。 |
-| 飞书兼容 CSV | 导出文字表格并打开飞书，仍需手动上传导入；不包含图片、视频附件，不是自动同步。 |
+| 飞书兼容 CSV | 导出文字表格，可手动导入飞书等表格工具；不包含图片、视频附件，不是自动同步。 |
 
-检测前后均可勾选片段导出选项，按钮会即时更新。
+各项导出功能统一在右上角「导出」中选择，按当前编辑后的镜头切点执行。
 
 ## 已知问题
 
@@ -94,10 +104,10 @@ npm run check
 npm run build:win
 ```
 
-Mac 构建命令为 `npm run build:mac:x64` 或 `npm run build:mac:arm64`，应在对应 Mac 环境安装依赖并构建。**macOS 尚未完成实机验证、签名和公证**，不能将构建配置视为兼容性保证。
+Mac arm64 构建命令为 `npm run build:mac:arm64`，应在 Apple Silicon Mac 环境安装依赖并构建。正式构建需提供 Developer ID 签名和 Apple 公证凭据；不要将凭据提交到源码。Mac 适配详情见 [MAC-0.9.3.md](desktop/MAC-0.9.3.md)。
 
 ## 数据与依赖
 
-影片分析与笔记保存在本机。导出的单文件 HTML 包含原视频，分享该文件也会分享其中的视频内容。飞书按钮会打开外部网站。
+影片分析与笔记保存在本机。导出的单文件 HTML 包含原视频，分享该文件也会分享其中的视频内容。
 
-仓库只包含桌面应用源码、图标和文档，不包含影片、私人笔记、缓存或第三方二进制。Windows EXE 作为 Release 附件单独分发。第三方依赖分别遵循自己的许可证；向公众分发包含 FFmpeg 的安装包前，应完成对应构建的许可证及源码提供要求核对。当前项目未声明开放源码授权（`UNLICENSED`），上传 GitHub 不自动授予他人使用许可。
+仓库包含桌面应用源码、图标和文档，不包含影片、私人笔记或缓存。安装包作为 Release 附件单独分发。应用源码使用 MIT；第三方依赖分别遵循自己的许可证，MIT 不覆盖 FFmpeg 等第三方组件。对应构建的许可证及源码提供要求仍需单独核对，详见 [第三方声明](THIRD_PARTY_NOTICES.md)。
