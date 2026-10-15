@@ -502,7 +502,13 @@ app.whenReady().then(() => {
   if(process.platform==='darwin'){
     app.setAboutPanelOptions({applicationName:'片拉拉',applicationVersion:app.getVersion(),copyright:'© Fadeyin'});
     Menu.setApplicationMenu(Menu.buildFromTemplate(macMenuTemplate(command=>{
-      if(mainWindow&&!mainWindow.isDestroyed()){restoreWindow();mainWindow.webContents.send('fadeyin:native-command',command)}
+      if(mainWindow&&!mainWindow.isDestroyed()){
+        restoreWindow();
+        if(command==='open'||command==='new'){
+          const selector=command==='open'?'#pickBtn':'#newProjectBtn';
+          mainWindow.webContents.executeJavaScript(`document.querySelector(${JSON.stringify(selector)})?.click()`,true).catch(error=>console.error('Native open command failed:',error.message));
+        }else mainWindow.webContents.send('fadeyin:native-command',command);
+      }
     })));
   }
   const selfTestIndex = process.argv.indexOf('--self-test');
