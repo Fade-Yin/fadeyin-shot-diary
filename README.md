@@ -1,16 +1,16 @@
 # 片拉拉 · Pianlala
 
-## 当前版本 0.8.4（2026-10-14）
+## 当前版本 0.9.3（2026-10-16）
 
 源码已采用 [MIT](LICENSE)，第三方组件保持原有许可，见 [第三方声明](THIRD_PARTY_NOTICES.md)。开发者：B站 Fadeyin。
 
-新版包含系统跟随的浅深色 UI、时间线当前镜头拉片面板、项目独立的自定义字段，以及静帧、镜头 MP4、CSV、拉片日记导出。
+新版包含系统跟随的浅深色 UI、镜头悬停播放与离开暂停、时间线当前镜头拉片面板、项目独立的自定义字段，以及静帧、镜头 MP4、CSV、拉片日记导出。Mac 版补充原生菜单栏、标准 Command 快捷键与窗口外观联动。
 
 Node.js 22：在 `desktop` 下运行 `npm ci`、`npm start`。
 Windows 打包运行 `npm run build:win`；Apple Silicon Mac 运行 `npm run build:mac:arm64`。
-Actions 的 Build ARM64 0.8.4 工作流提供 macOS 原生构建与媒体工具测试。
+Actions 的 Build signed Mac ARM64 0.9.3 工作流提供 macOS 原生构建、回归测试、签名与公证检查。
 
-Mac 包使用 ad-hoc 签名，未使用 Developer ID 签名、未公证，不保证 Gatekeeper 放行。
+0.9.3 构建要求 Developer ID 签名及 Apple 公证凭据，验证签名、staple 和 Gatekeeper 后才上传安装包。构建产物不自动发布正式版，具体签名与公证结果以该次 Actions 日志为准；旧版本临时签名包不代表新版签名状态。
 二进制发布在第三方对应源码核验完成前保留为草稿；源码可自由获取。
 
 以下为旧版说明，仅供历史参考。
