@@ -85,7 +85,7 @@
       "hardenedRuntime": true,
       "notarize": true,
       "files": ["main.js", "preload.js", "mac-menu.cjs", "ai-api.cjs", "clip-export.cjs", "screenshot-store.cjs", "report-stream.cjs", "assets/fadeyin-icon.png", "!release-*/**", "!node_modules/ffprobe-static/bin/win32/**", "!node_modules/ffprobe-static/bin/linux/**", "!node_modules/ffprobe-static/bin/darwin/x64/**"],
-      "binaries": ["Resources/app.asar.unpacked/node_modules/ffmpeg-static/ffmpeg", "Resources/app.asar.unpacked/node_modules/ffprobe-static/bin/darwin/arm64/ffprobe"],
+      "binaries": ["Contents/Resources/app.asar.unpacked/node_modules/ffmpeg-static/ffmpeg", "Contents/Resources/app.asar.unpacked/node_modules/ffprobe-static/bin/darwin/arm64/ffprobe"],
       "icon": "assets/fadeyin-icon.icns",
       "target": [
         "dmg",
