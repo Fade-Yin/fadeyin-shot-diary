@@ -39,7 +39,7 @@ const analysisBeforeIcons=renderAnalysisRows;renderAnalysisRows=function(...args
 const lapBeforeIcons=renderLapTable;renderLapTable=function(...args){const result=lapBeforeIcons.apply(this,args);decorateShotActions();return result};decorateShotActions();
 // Restored projects and page changes can replace cards outside the render wrappers.
 // Only unconverted buttons trigger decoration, so observer work cannot loop.
-const cardObserver=new MutationObserver(()=>{if(document.querySelector('#rows [data-play]:not(.framePlayOverlay),#lapBody [data-lap-play]:not(.framePlayOverlay)'))decorateShotActions()});
+const cardObserver=new MutationObserver(records=>{const selector='[data-play]:not(.framePlayOverlay),[data-lap-play]:not(.framePlayOverlay)';if(records.some(record=>[...record.addedNodes].some(node=>node.nodeType===1&&(node.matches?.(selector)||node.querySelector?.(selector)))))decorateShotActions()});
 for(const container of [$('#rows'),$('#lapBody')])cardObserver.observe(container,{childList:true,subtree:true});
 // All modes edit the same shots model. Freeze its latest ranges before any await.
 const fallbackClipExport=$('#saveClipsBtn').onclick;

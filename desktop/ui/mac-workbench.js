@@ -30,7 +30,7 @@ const icons={
  moon:'<path d="M20 15A8.5 8.5 0 0 1 9 4a8.5 8.5 0 1 0 11 11Z"/>',
  desktop:'<rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 21h8m-4-4v4"/>'
 };
-function icon(name){return '<svg class="macIcon workbenchIcon" viewBox="0 0 24 24" aria-hidden="true">'+icons[name]+'</svg>'}
+function icon(name){return window.PianlalaGlyph?window.PianlalaGlyph(name,'macIcon workbenchIcon'):'<svg class="macIcon workbenchIcon" viewBox="0 0 24 24" aria-hidden="true">'+icons[name]+'</svg>'}
 function decorate(button,name,label,text=false){if(!button)return;const key=name+'|'+label+'|'+text;if(button.dataset.iconKey===key)return;button.dataset.iconKey=key;button.innerHTML=icon(name)+(text?'<span>'+label+'</span>':'');button.title=label;button.setAttribute('aria-label',label);button.type='button';button.classList.add(text?'macTextButton':'macIconButton')}
 function button(name,label,action,text=false){const b=document.createElement('button');b.className='btn';decorate(b,name,label,text);b.onclick=action;return b}
 const sheet=document.createElement('link');sheet.rel='stylesheet';sheet.href='mac-workbench.css';document.head.append(sheet);
@@ -120,7 +120,7 @@ let progressDismiss=0;
 const oldProgress=setProgress;setProgress=function(...args){clearTimeout(progressDismiss);const result=oldProgress.apply(this,args);updateState();if(Number(args[0])>=100)progressDismiss=setTimeout(()=>{if(!busy)progress.classList.add('hidden')},1500);return result};
 // Use a bounded icon pass only for newly rendered controls.
 function finishIcons(){for(const [selector,name,label] of [['.shotCornerActions [data-cut]','merge','合并前一镜头'],['.shotCornerActions button:not([data-cut])','blade','在此处切分镜头'],['.framePlayOverlay','play','播放镜头']])for(const b of document.querySelectorAll(selector+':not([data-mac-icon])')){decorate(b,name,label);b.dataset.macIcon='1'}for(const b of document.querySelectorAll('.thumbControls button:not([data-mac-icon])')){decorate(b,b.getAttribute('aria-label').includes('缩小')?'minus':'plus',b.getAttribute('aria-label'));b.dataset.macIcon='1'}}
-const observer=new MutationObserver(finishIcons);observer.observe($('#rows'),{childList:true,subtree:true});observer.observe($('#lapBody'),{childList:true,subtree:true});finishIcons();
+const observer=new MutationObserver(records=>{if(records.some(record=>[...record.addedNodes].some(node=>node.nodeType===1&&(node.matches?.('button')||node.querySelector?.('button')))))finishIcons()});observer.observe($('#rows'),{childList:true,subtree:true});observer.observe($('#lapBody'),{childList:true,subtree:true});finishIcons();
 const studyObserver=new MutationObserver(updateState);studyObserver.observe($('#analyzeBtn'),{childList:true});
 updateState();
 const fieldScript=document.createElement('script');fieldScript.src='project-fields.js';fieldScript.onload=()=>{const inspectorScript=document.createElement('script');inspectorScript.src='timeline-notes.js';document.body.append(inspectorScript)};document.body.append(fieldScript);

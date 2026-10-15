@@ -2,6 +2,8 @@
 (()=>{
 let reverseTimer=0,reverseSpeed=0,forwardSpeed=0,capturing=false;
 let activePreview=null,previewRaf=0,previewPending=null;
+let startingShotToken=null;
+const hoverPreview=()=>window.pianlalaHoverPreviewEnabled===true;
 const status=document.createElement('span');status.id='transportStatus';status.setAttribute('role','status');status.setAttribute('aria-live','polite');status.textContent='暂停';
 $('#videoBox .videoHead').append(status);
 function updateStatus(){status.textContent=reverseTimer?`倒放 ${reverseSpeed}×`:video.paused?'暂停':`正放 ${video.playbackRate}×`}
@@ -25,6 +27,7 @@ async function screenshot(){
     const image=document.createElement('canvas');image.width=video.videoWidth;image.height=video.videoHeight;
     image.getContext('2d').drawImage(video,0,0);
     const blob=await new Promise(resolve=>image.toBlob(resolve,'image/png'));if(!blob)throw new Error('未能生成截图');
+    if(desktopApi?.saveScreenshot){const saved=await desktopApi.saveScreenshot({bytes:new Uint8Array(await blob.arrayBuffer()),name:file.name.replace(/\.[^.]+$/,'')+'_'+frameFmt(t).replaceAll(':','-')});toast('截图已保存至：'+saved.path);window.dispatchEvent(new CustomEvent('pianlala-screenshot-saved',{detail:saved}));return}
     const url=URL.createObjectURL(blob),link=document.createElement('a');link.href=url;
     link.download=file.name.replace(/\.[^.]+$/,'')+'_'+t.toFixed(3).replace('.','-')+'.png';link.click();setTimeout(()=>URL.revokeObjectURL(url),60000);toast('已保存当前画面 PNG');
   }catch(e){toast('截图失败：'+e.message)}finally{capturing=false;capture.disabled=false}
@@ -43,10 +46,10 @@ function decorate(){
     surface.onclick=activate;
     surface.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();e.stopPropagation();activate()}};
     surface.onpointermove=e=>{
-      if(activePreview!==surface||busy||videoLoading||!video.paused||e.target.closest('button')||shots[i]!==s||e.pointerType==='touch')return;
+      if(!hoverPreview()||activePreview!==surface||busy||videoLoading||startingShotToken===shotStopToken||!video.paused||e.target.closest('button')||shots[i]!==s||e.pointerType==='touch')return;
       const r=surface.getBoundingClientRect(),ratio=Math.max(0,Math.min(1,(e.clientX-r.left)/Math.max(1,r.width))),index=Math.min(count-1,Math.floor(ratio*count));
       line.style.left=`${ratio*100}%`;previewPending={surface,s,i,index};
-      if(!previewRaf)previewRaf=requestAnimationFrame(()=>{previewRaf=0;const p=previewPending;previewPending=null;if(!p||p.surface!==activePreview||!p.surface.isConnected||busy||videoLoading||shots[p.i]!==p.s)return;seekFrame(p.s,p.index);const track=row.querySelector('.shotFrameTrack input'),label=row.querySelector('.shotFrameTrack small');if(track)track.value=p.index;if(label)label.textContent=`${frameFmt(p.s.start+p.index/nativeFps)} · ${p.index+1}/${count} 帧`});
+      if(!previewRaf)previewRaf=requestAnimationFrame(()=>{previewRaf=0;const p=previewPending;previewPending=null;if(!hoverPreview()||!p||p.surface!==activePreview||!p.surface.isConnected||startingShotToken===shotStopToken||!video.paused||busy||videoLoading||shots[p.i]!==p.s)return;seekFrame(p.s,p.index);const track=row.querySelector('.shotFrameTrack input'),label=row.querySelector('.shotFrameTrack small');if(track)track.value=p.index;if(label)label.textContent=`${frameFmt(p.s.start+p.index/nativeFps)} · ${p.index+1}/${count} 帧`});
     };
   }
   for(const button of document.querySelectorAll('[data-play],[data-lap-play]')){
@@ -66,12 +69,27 @@ for(const name of ['renderAnalysisRows','renderLapTable']){
   const wrapped=function(...args){const result=original.apply(this,args);decorate();return result};
   if(name==='renderAnalysisRows')renderAnalysisRows=wrapped;else renderLapTable=wrapped;
 }
-playShot=async function(i){const s=shots[i];if(!s||busy||videoLoading)return;stopTransport();shotStopToken++;clearTimeout(shotStopTimer);video.pause();activeEnd=null;const token=shotStopToken;try{await seek(s.start);if(token!==shotStopToken||shots[i]!==s)return;activeEnd=s.end;await video.play();if(token!==shotStopToken)return;monitorShotEnd(token)}catch(error){if(token===shotStopToken){activeEnd=null;toast('镜头播放失败：'+error.message)}}};
+playShot=async function(i){
+ const s=shots[i];if(!s||busy||videoLoading)return;
+ previewPending=null;stopTransport();shotStopToken++;clearTimeout(shotStopTimer);
+ const token=shotStopToken;startingShotToken=token;activeEnd=null;video.pause();
+ try{
+  // Playback and buffering begin in the click gesture, without a separate seek wait.
+  // The export/screenshot seek() helper still waits for a decoded frame.
+  if(video.seeking||Math.abs(video.currentTime-s.start)>.000001)video.currentTime=s.start;
+  activeEnd=s.end;await video.play();
+  if(token!==shotStopToken||shots[i]!==s)return;
+  monitorShotEnd(token);
+ }catch(error){if(token===shotStopToken){activeEnd=null;if(error.name!=='AbortError')toast('镜头播放失败：'+error.message)}}
+ finally{if(startingShotToken===token)startingShotToken=null}
+};
 // Delegate on the persistent container: project restoration and pagination replace cards.
 const previewRows=$('#rows');
+previewRows.addEventListener('pointermove',e=>{if(!hoverPreview()){previewPending=null;e.stopImmediatePropagation()}},true);
+window.addEventListener('pianlala-hover-preview-changed',()=>{previewPending=null});
 function previewTarget(e){if(e.target.closest('button')||e.type==='pointermove'&&!video.paused)return null;const image=e.target.closest('img.thumb,.shotHoverPreview');if(!image)return null;const row=image.closest('.shotRow'),button=row?.querySelector('[data-play]');if(!button)return null;const i=Number(button.dataset.play),s=shots[i];if(!s)return null;let surface=row.querySelector('.shotHoverPreview');if(!surface){surface=document.createElement('div');surface.className='shotHoverPreview';const img=row.querySelector('img.thumb');img.before(surface);surface.append(img);const line=document.createElement('span');line.className='shotPreviewLine';surface.append(line)}return {row,surface,i,s}}
 previewRows.addEventListener('click',e=>{const p=previewTarget(e);if(!p||busy||videoLoading)return;e.stopImmediatePropagation();previewPending=null;if(activePreview)activePreview.classList.remove('active');activePreview=p.surface;p.surface.classList.add('active');p.surface.querySelector('.shotPreviewLine').style.left='0%';seekFrame(p.s,0)},true);
-previewRows.addEventListener('pointermove',e=>{const p=previewTarget(e);if(!p||p.surface!==activePreview||busy||videoLoading)return;e.stopImmediatePropagation();const r=p.surface.getBoundingClientRect(),ratio=Math.max(0,Math.min(1,(e.clientX-r.left)/Math.max(1,r.width))),count=Math.max(1,Math.ceil((p.s.end-p.s.start)*nativeFps-1e-7));p.index=Math.min(count-1,Math.floor(ratio*count));p.surface.querySelector('.shotPreviewLine').style.left=ratio*100+'%';previewPending=p;if(!previewRaf)previewRaf=requestAnimationFrame(()=>{previewRaf=0;const target=previewPending;previewPending=null;if(!target||target.surface!==activePreview||!target.surface.isConnected||busy||videoLoading)return;seekFrame(target.s,target.index);const slider=target.row.querySelector('.shotFrameTrack input');if(slider)slider.value=target.index})},true);
+previewRows.addEventListener('pointermove',e=>{const p=previewTarget(e);if(!p||p.surface!==activePreview||startingShotToken===shotStopToken||busy||videoLoading)return;e.stopImmediatePropagation();const r=p.surface.getBoundingClientRect(),ratio=Math.max(0,Math.min(1,(e.clientX-r.left)/Math.max(1,r.width))),count=Math.max(1,Math.ceil((p.s.end-p.s.start)*nativeFps-1e-7));p.index=Math.min(count-1,Math.floor(ratio*count));p.surface.querySelector('.shotPreviewLine').style.left=ratio*100+'%';previewPending=p;if(!previewRaf)previewRaf=requestAnimationFrame(()=>{previewRaf=0;const target=previewPending;previewPending=null;if(!target||target.surface!==activePreview||!target.surface.isConnected||startingShotToken===shotStopToken||!video.paused||busy||videoLoading)return;seekFrame(target.s,target.index);const slider=target.row.querySelector('.shotFrameTrack input');if(slider)slider.value=target.index})},true);
 const oldLoad=loadVideo;loadVideo=async function(...args){stopTransport();await oldLoad.apply(this,args);if(sourceFile&&!videoLoading&&Number.isFinite(video.duration)){queueProjectSave();await projectWriteQueue}};
 video.addEventListener('play',stopReverse);
 let trackSyncFrame=0;
@@ -79,7 +97,7 @@ function syncFrameTracks(){if(trackSyncFrame)return;trackSyncFrame=requestAnimat
 for(const event of ['timeupdate','seeked','pause','ended'])video.addEventListener(event,syncFrameTracks);
 document.addEventListener('visibilitychange',()=>{if(document.hidden){stopTransport();video.pause()}});
 document.addEventListener('keydown',e=>{
-  if(e.isComposing||e.ctrlKey||e.metaKey||e.altKey||busy||!sourceFile||document.querySelector('dialog[open],:popover-open')||e.target.closest('input,textarea,select,[contenteditable],dialog,button'))return;
+  if(e.isComposing||e.ctrlKey||e.metaKey||e.altKey||busy||!sourceFile||document.querySelector('dialog[open],:popover-open')||e.target.closest('input:not([type=range]),textarea,select,[contenteditable],dialog,button'))return;
   const key=e.key.toLowerCase();if(!['j','k','l','c',' '].includes(key))return;
   e.preventDefault();e.stopImmediatePropagation();if(e.repeat)return;
   shotStopToken++;clearTimeout(shotStopTimer);

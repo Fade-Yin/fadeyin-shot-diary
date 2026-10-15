@@ -81,7 +81,7 @@ detection.append($('#analyzeBtn'),$('#cancelBtn'),...fields,settingsPanel.queryS
 studyBar.insertBefore(detection,studyBar.querySelector('span').nextSibling);
 $('#reanalyzeBtn').hidden=true;
 const exportBar=document.querySelector('.dockPanel[data-panel="settings"] .dockBar span');exportBar.textContent='导出区';
-document.querySelector('[data-metric="color"]').textContent='Cineprint';
+document.querySelector('[data-metric="color"]').textContent='指纹';
 setInterval(()=>{const label=shots.length?'重新分析':'检测切点';if($('#analyzeBtn').textContent!==label)$('#analyzeBtn').textContent=label},250);
 const reportGroup=document.createElement('div');reportGroup.className='reportExportGroup';
 const reportHint=document.createElement('p');reportHint.textContent='单文件 HTML · 镜头画面与时间码 · 可分享查看';

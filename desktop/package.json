@@ -1,6 +1,6 @@
 {
   "name": "fadeyin-shot-diary",
-  "version": "0.8.4",
+  "version": "0.9.3",
   "description": "片拉拉 - 镜头拆解与序列拉片分析",
   "main": "main.js",
   "author": "Fadeyin",
@@ -32,9 +32,11 @@
     },
     "files": [
       "main.js",
+      "mac-menu.cjs",
       "preload.js",
       "ai-api.cjs",
       "clip-export.cjs",
+      "screenshot-store.cjs",
       "report-stream.cjs",
       "assets/fadeyin-icon.png",
       "assets/fadeyin-icon.ico"
@@ -54,9 +56,11 @@
     "win": {
       "files": [
         "main.js",
+        "mac-menu.cjs",
         "preload.js",
         "ai-api.cjs",
         "clip-export.cjs",
+        "screenshot-store.cjs",
         "report-stream.cjs",
         "assets/fadeyin-icon.png",
         "assets/fadeyin-icon.ico",
@@ -77,6 +81,11 @@
       "createDesktopShortcut": true
     },
     "mac": {
+      "minimumSystemVersion": "12.0",
+      "hardenedRuntime": true,
+      "notarize": true,
+      "files": ["main.js", "preload.js", "mac-menu.cjs", "ai-api.cjs", "clip-export.cjs", "screenshot-store.cjs", "report-stream.cjs", "assets/fadeyin-icon.png", "!release-*/**", "!node_modules/ffprobe-static/bin/win32/**", "!node_modules/ffprobe-static/bin/linux/**", "!node_modules/ffprobe-static/bin/darwin/x64/**"],
+      "binaries": ["Resources/app.asar.unpacked/node_modules/ffmpeg-static/ffmpeg", "Resources/app.asar.unpacked/node_modules/ffprobe-static/bin/darwin/arm64/ffprobe"],
       "icon": "assets/fadeyin-icon.icns",
       "target": [
         "dmg",

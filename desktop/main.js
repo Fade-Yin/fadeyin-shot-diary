@@ -6,6 +6,10 @@ const { pathToFileURL } = require('node:url');
 const { writeVideoReport } = require('./report-stream.cjs');
 const { requestAI } = require('./ai-api.cjs');
 const { frameTimesFromCsv,clipRange,clipArgs } = require('./clip-export.cjs');
+const {createScreenshotStore}=require('./screenshot-store.cjs');
+const {template:macMenuTemplate}=require('./mac-menu.cjs');
+let screenshotStore;
+function screenshots(){return screenshotStore??=createScreenshotStore({configPath:path.join(app.getPath('userData'),'screenshot-settings.json'),picturesPath:app.getPath('pictures')})}
 const aiRequests = new Map();
 
 let mainWindow = null;
@@ -402,9 +406,9 @@ function createWindow() {
     height: 920,
     minWidth: 980,
     minHeight: 680,
-    backgroundColor: nativeTheme.shouldUseDarkColors ? '#17181c' : '#e9eaed',
+    backgroundColor: process.platform==='darwin' ? '#00000000' : nativeTheme.shouldUseDarkColors ? '#141416' : '#ececf0',
     title: '片拉拉',
-    ...(process.platform==='win32'?{titleBarStyle:'hidden',titleBarOverlay:{color:nativeTheme.shouldUseDarkColors?'#17181c':'#e9eaed',symbolColor:nativeTheme.shouldUseDarkColors?'#eeeef2':'#202126',height:44}}:process.platform==='darwin'?{titleBarStyle:'hiddenInset',trafficLightPosition:{x:18,y:14}}:{}),
+    ...(process.platform==='win32'?{titleBarStyle:'hidden',titleBarOverlay:{color:nativeTheme.shouldUseDarkColors?'#141416':'#ececf0',symbolColor:nativeTheme.shouldUseDarkColors?'#f5f5f7':'#1d1d1f',height:52}}:process.platform==='darwin'?{titleBarStyle:'hiddenInset',trafficLightPosition:{x:20,y:19},vibrancy:'under-window',visualEffectState:'followWindow'}:{}),
     icon: path.join(__dirname, 'assets', process.platform === 'win32' ? 'fadeyin-icon.ico' : 'fadeyin-icon.png'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
@@ -419,16 +423,17 @@ function createWindow() {
   trustedPage=pathToFileURL(page).href;
   mainWindow.webContents.on('will-navigate',event=>event.preventDefault());
   mainWindow.webContents.setWindowOpenHandler(({url})=>{if(url==='https://docs.feishu.cn/sheets')shell.openExternal(url);return {action:'deny'}});
-  mainWindow.webContents.session.setPermissionRequestHandler((_wc,_permission,callback)=>callback(false));
+  mainWindow.webContents.session.setPermissionRequestHandler((wc,permission,callback,details)=>callback(permission==='fullscreen'&&wc===mainWindow?.webContents&&(details?.requestingUrl||wc.getURL())===trustedPage));
   mainWindow.loadFile(page);
   mainWindow.webContents.on('did-finish-load',()=>{if(closePromptPending)mainWindow.webContents.send('fadeyin:close-requested')});
   mainWindow.on('close',event=>{if(process.platform==='win32'&&!quitting){event.preventDefault();requestWindowClose()}});
   mainWindow.on('closed',()=>{mainWindow=null});
 }
 
-handle('fadeyin:appearance',(_event,theme)=>{
+handle('fadeyin:appearance',(_event,theme,preference)=>{
   if(!['light','dark'].includes(theme))throw new Error('无效的外观设置');
-  if(process.platform==='win32'&&mainWindow&&!mainWindow.isDestroyed())mainWindow.setTitleBarOverlay({color:theme==='dark'?'#17181c':'#e9eaed',symbolColor:theme==='dark'?'#eeeef2':'#202126',height:44});
+  if(process.platform==='darwin'&&['light','dark','system'].includes(preference))nativeTheme.themeSource=preference;
+  if(process.platform==='win32'&&mainWindow&&!mainWindow.isDestroyed())mainWindow.setTitleBarOverlay({color:theme==='dark'?'#141416':'#ececf0',symbolColor:theme==='dark'?'#f5f5f7':'#1d1d1f',height:52});
   return true;
 });
 handle('fadeyin:close-choice',async(_event,choice)=>{
@@ -462,6 +467,9 @@ handle('fadeyin:choose-export-folder', async () => {
   if(result.canceled)return null;const folder=fs.realpathSync(result.filePaths[0]);exportFolders.add(folder);return folder;
 });
 handle('fadeyin:split-video', splitVideo, true);
+handle('fadeyin:screenshot-directory',()=>screenshots().directory());
+handle('fadeyin:choose-screenshot-directory',async()=>{const result=await dialog.showOpenDialog(mainWindow,{defaultPath:screenshots().directory(),properties:['openDirectory','createDirectory']});if(result.canceled)return null;return screenshots().setDirectory(result.filePaths[0])});
+handle('fadeyin:save-screenshot',async(_event,options)=>{const result=await screenshots().save(options);revealedPaths.add(result.path);return result});
 handle('fadeyin:export-stills', exportStills, true);
 handle('fadeyin:save-report', async(_event,options)=>{
   const videoPath=videoFile(options?.path);
@@ -479,10 +487,24 @@ ipcMain.on('fadeyin:cancel', event => {
   cancelled = true;
   for (const child of activeProcesses) child.kill();
 });
+ipcMain.on('fadeyin:native-menu-state',(event,state)=>{
+  try{trusted(event)}catch{return}
+  if(process.platform!=='darwin'||!state||typeof state!=='object')return;
+  const menu=Menu.getApplicationMenu();
+  for(const [id,enabled] of Object.entries(state).slice(0,40)){
+    const item=menu?.getMenuItemById(id);if(item&&typeof enabled==='boolean')item.enabled=enabled;
+  }
+});
 
 app.whenReady().then(() => {
   // Keep native macOS application commands; Windows uses the in-app settings.
   if(process.platform==='win32')Menu.setApplicationMenu(null);
+  if(process.platform==='darwin'){
+    app.setAboutPanelOptions({applicationName:'片拉拉',applicationVersion:app.getVersion(),copyright:'© Fadeyin'});
+    Menu.setApplicationMenu(Menu.buildFromTemplate(macMenuTemplate(command=>{
+      if(mainWindow&&!mainWindow.isDestroyed()){restoreWindow();mainWindow.webContents.send('fadeyin:native-command',command)}
+    })));
+  }
   const selfTestIndex = process.argv.indexOf('--self-test');
   if (selfTestIndex >= 0) {
     const testPath = process.argv[selfTestIndex + 1];

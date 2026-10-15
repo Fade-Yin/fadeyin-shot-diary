@@ -1,0 +1,242 @@
+/* 片拉拉 0.9 · Tahoe design layer
+   Liquid Glass for navigation (toolbar, sidebar, popovers, HUD); opaque, softly elevated surfaces for content. */
+html[data-ui=tahoe]{
+ --t-accent:#0a7cff;--t-accent-strong:#006fe6;--t-accent-soft:color-mix(in srgb,var(--t-accent) 14%,transparent);
+ --t-window:#ececf0;--t-surface:#ffffff;--t-surface-2:#f5f5f7;--t-fill:rgba(118,118,128,.12);--t-fill-hover:rgba(118,118,128,.2);
+ --t-label:#1d1d1f;--t-label-2:rgba(60,60,67,.72);--t-label-3:rgba(60,60,67,.45);--t-separator:rgba(60,60,67,.14);
+ --t-glass:rgba(250,250,252,.66);--t-glass-strong:rgba(252,252,254,.82);--t-glass-edge:rgba(255,255,255,.75);--t-glass-rim:rgba(0,0,0,.08);
+ --t-blur:saturate(180%) blur(28px);
+ --t-shadow-1:0 0 0 .5px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04),0 4px 14px rgba(0,0,0,.04);
+ --t-shadow-float:0 0 0 .5px rgba(0,0,0,.1),0 12px 40px rgba(0,0,0,.16),0 2px 8px rgba(0,0,0,.06);
+ --t-r-window:16px;--t-r-panel:18px;--t-r-control:10px;--t-r-capsule:999px;--t-ease:cubic-bezier(.3,.7,.2,1);
+ --bg:var(--t-window);--panel:var(--t-surface);--text:var(--t-label);--muted:var(--t-label-2);--line:var(--t-separator);--accent:var(--t-accent);--accent2:var(--t-accent-soft);--surface-input:#ececef;--hover:#e2e2e6;--surface-raised:#fff;--glass:var(--t-glass);
+}
+html[data-ui=tahoe][data-theme=dark]{
+ --t-accent:#3d9bff;--t-accent-strong:#0a84ff;
+ --t-window:#141416;--t-surface:#1f1f22;--t-surface-2:#2a2a2e;--t-fill:rgba(120,120,128,.24);--t-fill-hover:rgba(120,120,128,.34);
+ --t-label:#f5f5f7;--t-label-2:rgba(235,235,245,.66);--t-label-3:rgba(235,235,245,.36);--t-separator:rgba(255,255,255,.09);
+ --t-glass:rgba(40,40,44,.6);--t-glass-strong:rgba(44,44,48,.82);--t-glass-edge:rgba(255,255,255,.14);--t-glass-rim:rgba(0,0,0,.5);
+ --t-shadow-1:0 0 0 .5px rgba(255,255,255,.06),0 1px 3px rgba(0,0,0,.3);
+ --t-shadow-float:0 0 0 .5px rgba(255,255,255,.12),0 18px 50px rgba(0,0,0,.55),0 2px 10px rgba(0,0,0,.3);
+ --surface-raised:#3a3a3f;--surface-input:#2c2c30;--hover:#38383d;
+}
+html[data-ui=tahoe][data-platform=darwin]{--t-window:rgba(236,236,240,.55)}
+html[data-ui=tahoe][data-platform=darwin][data-theme=dark]{--t-window:rgba(20,20,22,.55)}
+html[data-ui=tahoe][data-platform=darwin],html[data-ui=tahoe][data-platform=darwin] body{background:transparent}
+
+html[data-ui=tahoe] body{background:var(--t-window);color:var(--t-label);font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','SF Pro','PingFang SC','Segoe UI Variable Text','Segoe UI','Microsoft YaHei UI',sans-serif;-webkit-font-smoothing:antialiased;letter-spacing:-.003em}
+html[data-ui=tahoe] .main{padding:0 10px 10px}
+html[data-ui=tahoe] ::selection{background:color-mix(in srgb,var(--t-accent) 30%,transparent);color:inherit}
+html[data-ui=tahoe] :focus-visible{outline:3.5px solid color-mix(in srgb,var(--t-accent) 55%,transparent);outline-offset:1px;border-radius:var(--t-r-control)}
+
+/* Glyphs */
+html[data-ui=tahoe] .tahoeGlyph{width:17px;height:17px;flex:none;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;overflow:visible}
+
+/* Controls: borderless fills, capsule primary actions */
+html[data-ui=tahoe] .btn{min-height:28px;border:0;border-radius:var(--t-r-control);background:var(--t-fill);color:var(--t-label);font-weight:500;font-size:12.5px;padding:5px 12px;transition:background-color .18s var(--t-ease),transform .12s var(--t-ease),box-shadow .18s var(--t-ease)}
+html[data-ui=tahoe] .btn:hover:not(:disabled){background:var(--t-fill-hover)}
+html[data-ui=tahoe] .btn:active:not(:disabled){transform:scale(.97)}
+html[data-ui=tahoe] .btn.primary,html[data-ui=tahoe] .editorTopbar .macUtilities .toolbarExport{background:var(--t-accent);color:#fff;border-radius:var(--t-r-capsule);padding-inline:16px;box-shadow:inset 0 .5px 0 rgba(255,255,255,.35),0 1px 2px color-mix(in srgb,var(--t-accent) 40%,transparent)}
+html[data-ui=tahoe] .btn.primary:hover:not(:disabled),html[data-ui=tahoe] .editorTopbar .macUtilities .toolbarExport:hover{background:var(--t-accent-strong);color:#fff}
+html[data-ui=tahoe] .btn.danger{color:#ff3b30}
+html[data-ui=tahoe] :is(input[type=text],input[type=search],input[type=number],input[type=url],input[type=password],input[type=date],select,textarea):not(.tahoePaletteField input){border:0;border-radius:8px;background:var(--t-fill);color:var(--t-label);box-shadow:inset 0 0 0 .5px var(--t-separator);transition:box-shadow .15s}
+html[data-ui=tahoe] :is(input,select,textarea):focus,html[data-ui=tahoe] :is(input[type=text],input[type=search],input[type=number],input[type=url],input[type=password],input[type=date],select,textarea):not(.tahoePaletteField input):focus{outline:none;box-shadow:0 0 0 3.5px color-mix(in srgb,var(--t-accent) 45%,transparent)}
+html[data-ui=tahoe] input[type=checkbox]{accent-color:var(--t-accent)}
+
+/* Sliders: thin capsule track with a glass knob */
+html[data-ui=tahoe] input[type=range]{-webkit-appearance:none;appearance:none;height:18px;background:transparent;--fill:var(--t-accent)}
+html[data-ui=tahoe] input[type=range]::-webkit-slider-runnable-track{height:4px;border-radius:4px;background:linear-gradient(var(--fill),var(--fill)) 0/var(--progress,50%) 100% no-repeat,var(--t-fill-hover)}
+html[data-ui=tahoe] input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;margin-top:-6px;border-radius:50%;background:#fff;box-shadow:0 0 0 .5px rgba(0,0,0,.12),0 1px 4px rgba(0,0,0,.25);transition:transform .15s var(--t-ease)}
+html[data-ui=tahoe] input[type=range]:active::-webkit-slider-thumb{transform:scale(1.15)}
+html[data-ui=tahoe] input[type=range]:disabled{opacity:.4}
+
+/* Unified toolbar */
+html[data-ui=tahoe] .editorTopbar{height:52px;min-height:52px;padding:8px 2px;gap:12px;-webkit-app-region:drag}
+html[data-ui=tahoe][data-platform=darwin] .editorTopbar{padding-left:78px}
+html[data-ui=tahoe] .editorTopbar :is(button,input,select,a,.tahoeGroup){-webkit-app-region:no-drag}
+html[data-ui=tahoe] .tahoeLeading{display:flex;gap:4px}
+html[data-ui=tahoe] .tahoeToolbarButton,html[data-ui=tahoe] .editorTopbar .macUtilities .tahoeGroup .btn{width:34px;min-width:34px;height:34px;min-height:34px;padding:0;display:grid;place-items:center;border-radius:var(--t-r-capsule);background:transparent;color:var(--t-label-2)}
+html[data-ui=tahoe] .tahoeToolbarButton:hover,html[data-ui=tahoe] .editorTopbar .macUtilities .tahoeGroup .btn:hover{background:var(--t-fill);color:var(--t-label)}
+html[data-ui=tahoe] .tahoeLeading .tahoeToolbarButton,html[data-ui=tahoe] .tahoeGroup{background:var(--t-glass-strong);backdrop-filter:var(--t-blur);box-shadow:inset 0 .5px 0 var(--t-glass-edge),0 0 0 .5px var(--t-glass-rim),0 2px 10px rgba(0,0,0,.06)}
+html[data-ui=tahoe] .tahoeGroup{display:flex;gap:0;padding:0 2px;border-radius:var(--t-r-capsule);height:36px;align-items:center}
+html[data-ui=tahoe] .tahoeGroup .tahoeGlyph,html[data-ui=tahoe] .tahoeToolbarButton .tahoeGlyph{width:18px;height:18px}
+html[data-ui=tahoe] .macDocumentTitle{gap:10px;min-width:0}
+html[data-ui=tahoe] .macDocumentTitle b{white-space:nowrap;flex:none}
+html[data-ui=tahoe] .macDocumentTitle .macSaveState{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+html[data-ui=tahoe] .macDocumentTitle .macBrandLogo{width:26px;height:26px;border-radius:6px;filter:drop-shadow(0 1px 2px rgba(0,0,0,.18))}
+html[data-ui=tahoe] .macDocumentTitle b{font-size:15px;font-weight:700;letter-spacing:-.01em}
+html[data-ui=tahoe] .macDocumentTitle .macSaveState{font-size:11.5px;color:var(--t-label-3)}
+html[data-ui=tahoe] .editorTopbar .macUtilities{gap:8px;align-items:center}
+html[data-ui=tahoe] .editorTopbar .macUtilities .toolbarExport{height:36px;min-height:36px;margin-left:2px;gap:6px}
+html[data-ui=tahoe] .tahoeSearchField{display:flex;align-items:center;gap:7px;height:36px;width:min(280px,26vw);padding:0 8px 0 12px;border:0;border-radius:var(--t-r-capsule);color:var(--t-label-3);background:var(--t-glass-strong);backdrop-filter:var(--t-blur);box-shadow:inset 0 .5px 0 var(--t-glass-edge),0 0 0 .5px var(--t-glass-rim),0 2px 10px rgba(0,0,0,.06);font:inherit;font-size:12.5px;cursor:text;transition:box-shadow .2s}
+html[data-ui=tahoe] .tahoeSearchField:hover{color:var(--t-label-2)}
+html[data-ui=tahoe] .tahoeSearchField span{flex:1;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+html[data-ui=tahoe] kbd{font:500 10.5px/1 -apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI',sans-serif;padding:3px 6px;border-radius:5px;background:var(--t-fill);color:var(--t-label-2);white-space:nowrap}
+html[data-ui=tahoe] .aiEntry,html[data-ui=tahoe] #aiBtn{display:inline-flex;align-items:center;gap:6px;border-radius:var(--t-r-capsule)}
+
+/* Sidebar & panels */
+html[data-ui=tahoe] #workspace.dockWorkspace{gap:0}
+html[data-ui=tahoe] .dockPanel{border-radius:var(--t-r-panel);background:var(--t-surface);box-shadow:var(--t-shadow-1);overflow:hidden}
+html[data-ui=tahoe] .dockPanel[data-panel=library]{background:var(--t-glass);backdrop-filter:var(--t-blur);box-shadow:inset 0 .5px 0 var(--t-glass-edge),0 0 0 .5px var(--t-glass-rim),0 8px 30px rgba(0,0,0,.08)}
+html[data-ui=tahoe][data-sidebar=hidden] .dockPanel[data-panel=library],html[data-ui=tahoe][data-sidebar=hidden] .dockPanel[data-panel=library]+.dockGrip,html[data-ui=tahoe][data-sidebar=hidden] .dockGrip:has(+.dockPanel[data-panel=library]){display:none!important}
+/* Dock items grow by their ratio; once the library is gone the remaining ratios sum below 1 and would leave a gap. */
+html[data-ui=tahoe][data-sidebar=hidden] .dockSplit:has(>.dockPanel[data-panel=library])>:not(.dockGrip):not([data-panel=library]){flex-grow:1!important}
+html[data-ui=tahoe] .dockGrip{flex-basis:10px;background:transparent;position:relative}
+html[data-ui=tahoe] .dockGrip::after{content:'';position:absolute;inset:30% 4px;border-radius:2px;background:transparent;transition:background .2s}
+html[data-ui=tahoe] .dockSplit.v>.dockGrip::after{inset:4px 30%}
+html[data-ui=tahoe] .dockGrip:hover{background:transparent}
+html[data-ui=tahoe] .dockGrip:hover::after{background:color-mix(in srgb,var(--t-accent) 60%,transparent)}
+html[data-ui=tahoe] .dockBar{min-height:46px;padding:8px 14px;border-bottom:0;font-size:13px;font-weight:650;letter-spacing:-.005em}
+html[data-ui=tahoe] .dockBar>span{font-size:13px}
+html[data-ui=tahoe] .dockBar>.workbenchIcon{opacity:.25}
+html[data-ui=tahoe] .dockBar .btn.macIconButton,html[data-ui=tahoe] .macEditTools .btn,html[data-ui=tahoe] .thumbControls .btn{background:transparent;border-radius:8px;color:var(--t-label-2)}
+html[data-ui=tahoe] .dockBar .btn.macIconButton:hover:not(:disabled),html[data-ui=tahoe] .macEditTools .btn:hover:not(:disabled){background:var(--t-fill);color:var(--t-label)}
+html[data-ui=tahoe] .macEditTools{display:flex;gap:1px;padding:2px;border-radius:11px;background:var(--t-fill)}
+html[data-ui=tahoe] .macEditTools .btn{width:30px;min-width:30px;height:28px;min-height:28px;padding:0;display:grid;place-items:center}
+html[data-ui=tahoe] .macEditTools .btn[aria-pressed=true],html[data-ui=tahoe] .macEditTools .btn.active{background:var(--t-surface);color:var(--t-accent);box-shadow:0 1px 3px rgba(0,0,0,.12),0 0 0 .5px rgba(0,0,0,.04)}
+
+/* Library */
+html[data-ui=tahoe] .dockPanel[data-panel=library] .projectSidebar{padding:4px 10px 10px!important}
+html[data-ui=tahoe] .macSearch{height:30px;border-radius:9px;background:var(--t-fill);box-shadow:none}
+html[data-ui=tahoe] .macSearch input{box-shadow:none!important;background:transparent!important}
+html[data-ui=tahoe] .projectItem{border-radius:11px;min-height:60px;padding:8px 22px 8px 8px;transition:background-color .15s}
+html[data-ui=tahoe] .projectItem.active{background:var(--t-accent);color:#fff}
+html[data-ui=tahoe][data-theme=dark] .projectItem.active{background:#0a6ce0}
+html[data-ui=tahoe] .projectEntry:has(.projectItem.active) .projectDelete,html[data-ui=tahoe] .projectItem.active :is(button,.btn,svg){color:#fff}
+html[data-ui=tahoe] .projectItem.active :is(b,small,span){color:#fff}
+html[data-ui=tahoe] .projectItem.active small{opacity:.82}
+html[data-ui=tahoe] .projectItem :is(img,canvas,.projectCover){border-radius:7px}
+html[data-ui=tahoe] .macViewSwitch{background:var(--t-fill);border-radius:9px;padding:2px;position:relative}
+html[data-ui=tahoe] .macViewSwitch .btn{background:transparent!important;position:relative;z-index:1}
+html[data-ui=tahoe] .macViewSwitch .btn[aria-pressed=true]{color:var(--t-label)}
+
+/* Segmented control with sliding thumb */
+html[data-ui=tahoe] .tahoeSegmented{position:relative;isolation:isolate}
+html[data-ui=tahoe] .tahoeThumb{position:absolute;top:2px;bottom:2px;left:0;border-radius:inherit;background:var(--t-surface);box-shadow:0 1px 3px rgba(0,0,0,.14),0 0 0 .5px rgba(0,0,0,.05);transition:transform .32s var(--t-ease),width .32s var(--t-ease),opacity .2s;z-index:-1;pointer-events:none}
+html[data-ui=tahoe][data-theme=dark] .tahoeThumb{background:#5a5a60}
+html[data-ui=tahoe] .dockBar .modeSwitch{padding:2px;border-radius:var(--t-r-capsule);background:var(--t-fill)}
+html[data-ui=tahoe] .dockBar .modeSwitch .modeBtn{height:28px;min-height:28px;border-radius:var(--t-r-capsule);background:transparent!important;box-shadow:none!important;color:var(--t-label-2);font-size:12.5px;padding:4px 14px;transition:color .2s}
+html[data-ui=tahoe] .dockBar .modeSwitch .modeBtn[aria-selected=true]{color:var(--t-label)}
+html[data-ui=tahoe] .dockBar .modeSwitch .modeBtn .tahoeGlyph{width:15px;height:15px}
+
+/* Player */
+html[data-ui=tahoe] #workspace.dockWorkspace .previewWrap{border-radius:12px;background:#000;box-shadow:0 0 0 .5px rgba(0,0,0,.2)}
+html[data-ui=tahoe] .macWelcome{background:radial-gradient(120% 90% at 50% 0%,#24262c 0%,#0d0e11 70%)}
+html[data-ui=tahoe] .macWelcome>svg{width:44px;height:44px;color:#9aa0ab;stroke-width:1.3}
+html[data-ui=tahoe] .macWelcome h1{font-size:22px;font-weight:700;letter-spacing:-.015em}
+html[data-ui=tahoe] .macWelcome .btn{background:rgba(255,255,255,.14);backdrop-filter:var(--t-blur);color:#fff;border-radius:var(--t-r-capsule);padding:8px 18px;box-shadow:inset 0 .5px 0 rgba(255,255,255,.3),0 0 0 .5px rgba(255,255,255,.08)}
+html[data-ui=tahoe] .macWelcome .btn:hover{background:rgba(255,255,255,.22)}
+html[data-ui=tahoe] .macTransport{padding:8px 14px 10px}
+html[data-ui=tahoe] .macPlayerScrub{height:18px;margin-bottom:4px}
+html[data-ui=tahoe] .macPlayerScrub::-webkit-slider-runnable-track{height:5px}
+html[data-ui=tahoe] .macPlayerScrub::-webkit-slider-thumb{margin-top:-5.5px}
+html[data-ui=tahoe] .macPlayback{gap:4px;padding:3px;border-radius:var(--t-r-capsule);background:var(--t-fill)}
+html[data-ui=tahoe] .macPlayback .btn{width:32px;min-width:32px;height:32px;border-radius:50%;background:transparent;color:var(--t-label);display:grid;place-items:center;padding:0}
+html[data-ui=tahoe] .macPlayback .btn:hover:not(:disabled){background:var(--t-fill)}
+html[data-ui=tahoe] .macPlayback .macMainPlay{width:38px;min-width:38px;height:38px;margin:0 2px;background:var(--t-surface);box-shadow:0 1px 4px rgba(0,0,0,.14),0 0 0 .5px rgba(0,0,0,.05)}
+html[data-ui=tahoe][data-theme=dark] .macPlayback .macMainPlay{background:#4a4a50}
+html[data-ui=tahoe] .macPlayback .macMainPlay .tahoeGlyph{width:19px;height:19px}
+html[data-ui=tahoe] .macPlayback :is([aria-label^=上一镜头],[aria-label^=下一镜头]) .tahoeGlyph{width:15px;height:15px}
+html[data-ui=tahoe] .macPlayerUtilities .btn{background:transparent;color:var(--t-label-2);border-radius:50%;width:32px;min-width:32px;height:32px;padding:0;display:grid;place-items:center}
+html[data-ui=tahoe] .macPlayerUtilities .btn:hover:not(:disabled){background:var(--t-fill);color:var(--t-label)}
+html[data-ui=tahoe] .macTimecode{font-size:12px;font-weight:500;font-variant-numeric:tabular-nums;color:var(--t-label-2);letter-spacing:0}
+html[data-ui=tahoe] .brightnessPanel{border-radius:12px;background:#111214}
+html[data-ui=tahoe] .brightnessMeta{background:var(--t-surface-2);color:var(--t-label-2)}
+html[data-ui=tahoe] .metricTabs{background:var(--t-fill)!important;border-radius:8px;padding:2px!important}
+html[data-ui=tahoe] .metricBtn{border-radius:6px;font-size:11px;color:var(--t-label-2);background:transparent}
+html[data-ui=tahoe] .metricBtn.active{background:var(--t-surface);color:var(--t-label);box-shadow:0 1px 2px rgba(0,0,0,.12)}
+html[data-ui=tahoe][data-theme=dark] .metricBtn.active{background:#5a5a60}
+html[data-ui=tahoe] #videoBox:fullscreen .macTransport{position:absolute;left:50%;bottom:28px;transform:translateX(-50%);width:min(860px,calc(100% - 64px));border-radius:26px;background:rgba(30,30,34,.55);backdrop-filter:var(--t-blur);box-shadow:inset 0 .5px 0 rgba(255,255,255,.2),0 20px 60px rgba(0,0,0,.5);color:#fff}
+
+/* Study area: shot cards */
+html[data-ui=tahoe] .macSceneTabs{border-bottom:0;padding:2px 14px 8px;gap:6px}
+html[data-ui=tahoe] .sceneTab{border-radius:var(--t-r-capsule);padding:4px 12px;min-height:26px;font-size:12px;font-weight:500;background:var(--t-fill);color:var(--t-label-2)}
+html[data-ui=tahoe] .sceneTab:hover{background:var(--t-fill-hover)}
+html[data-ui=tahoe] .sceneTab.active{background:var(--t-accent);color:#fff}
+html[data-ui=tahoe] #rows{padding:6px 16px 20px;gap:20px}
+html[data-ui=tahoe] #rows .shotRow{padding:8px;margin:-8px;border-radius:16px;transition:background-color .18s,box-shadow .18s}
+html[data-ui=tahoe] #rows .shotRow:hover{background:var(--t-surface-2)}
+html[data-ui=tahoe] #rows .shotRow.selected{background:var(--t-accent-soft);outline:0;box-shadow:inset 0 0 0 2px var(--t-accent)}
+html[data-ui=tahoe] #rows .thumb{border-radius:10px;box-shadow:0 0 0 .5px rgba(0,0,0,.12),0 2px 8px rgba(0,0,0,.08)}
+html[data-ui=tahoe] #rows .shotNum b{font-size:13px;font-weight:650}
+html[data-ui=tahoe] #rows .time{font-variant-numeric:tabular-nums;font-size:11px}
+html[data-ui=tahoe] .shotCornerActions .btn,html[data-ui=tahoe] .framePlayOverlay{background:rgba(24,24,28,.66)!important;backdrop-filter:var(--t-blur);color:#fff!important;border-radius:var(--t-r-capsule)!important;box-shadow:inset 0 .5px 0 rgba(255,255,255,.25),0 0 0 .5px rgba(255,255,255,.22),0 2px 8px rgba(0,0,0,.25)}
+html[data-ui=tahoe] .shotCornerActions .btn:disabled{opacity:.55}
+html[data-ui=tahoe] .macStudyEmpty>svg{width:40px;height:40px;stroke-width:1.3;color:var(--t-label-3)}
+html[data-ui=tahoe] .macStudyEmpty h2{font-size:17px;font-weight:700;letter-spacing:-.01em}
+html[data-ui=tahoe] .macStudyEmpty p{color:var(--t-label-2)}
+
+/* Lap table */
+html[data-ui=tahoe] .logTable{border-collapse:separate;border-spacing:0}
+html[data-ui=tahoe] .logTable th{position:sticky;top:0;z-index:2;background:var(--t-glass-strong);backdrop-filter:var(--t-blur);font-size:11.5px;font-weight:600;color:var(--t-label-2);border:0;border-bottom:.5px solid var(--t-separator)}
+html[data-ui=tahoe] .logTable td{border:0;border-bottom:.5px solid var(--t-separator)}
+html[data-ui=tahoe] .logTable tbody tr:nth-child(even) td{background:color-mix(in srgb,var(--t-fill) 35%,transparent)}
+html[data-ui=tahoe] .logTable tbody tr:hover td{background:var(--t-accent-soft)}
+
+/* Floating material: popovers, dialogs, menus */
+html[data-ui=tahoe] :is(dialog,.toolbarPopover,.macParameters,#layoutPopover,.projectContextMenu,[popover]):not(.tahoeMenu){border:0;border-radius:22px;background:var(--t-glass-strong);backdrop-filter:var(--t-blur);color:var(--t-label);box-shadow:var(--t-shadow-float),inset 0 .5px 0 var(--t-glass-edge)}
+html[data-ui=tahoe] dialog::backdrop{background:rgba(0,0,0,.2);backdrop-filter:none}
+html[data-ui=tahoe] dialog h2,html[data-ui=tahoe] .toolbarPopover h2{font-size:15px;font-weight:700;letter-spacing:-.01em}
+html[data-ui=tahoe] :is(dialog,[popover]) .btn:not(.primary):not(.danger):not([role=tab]){background:var(--t-fill)}
+html[data-ui=tahoe] :is(dialog,[popover]) [role=tablist]{background:var(--t-fill);border-radius:10px;padding:2px;gap:2px}
+html[data-ui=tahoe] :is(dialog,[popover]) [role=tab]{background:transparent;color:var(--t-label-2);border-radius:8px}
+html[data-ui=tahoe] :is(dialog,[popover]) [role=tab][aria-selected=true]{background:var(--t-surface);color:var(--t-label);box-shadow:0 1px 3px rgba(0,0,0,.14),0 0 0 .5px rgba(0,0,0,.05)}
+html[data-ui=tahoe][data-theme=dark] :is(dialog,[popover]) [role=tab][aria-selected=true]{background:#5a5a60}
+html[data-ui=tahoe] .confirmDialog .confirmActions .btn{border-radius:var(--t-r-capsule);min-height:32px;padding-inline:18px}
+html[data-ui=tahoe] .toast{left:50%!important;right:auto!important;bottom:22px!important;transform:translateX(-50%);border-radius:var(--t-r-capsule);padding:10px 18px;background:rgba(30,30,34,.72);backdrop-filter:var(--t-blur);color:#fff;font-weight:500;box-shadow:inset 0 .5px 0 rgba(255,255,255,.2),0 10px 30px rgba(0,0,0,.25)}
+
+/* Command palette */
+html[data-ui=tahoe] .tahoePalette{width:min(620px,calc(100vw - 40px));max-height:min(520px,calc(100vh - 120px));margin:14vh auto auto;padding:0;border-radius:24px;overflow:hidden;display:none;flex-direction:column;background:color-mix(in srgb,var(--t-surface) 88%,transparent)!important;backdrop-filter:saturate(180%) blur(40px)!important}
+html[data-ui=tahoe] .tahoePalette[open]{display:flex;animation:tahoePop .22s var(--t-ease)}
+html[data-ui=tahoe] .tahoePalette::backdrop{background:rgba(0,0,0,.08);backdrop-filter:none}
+html[data-ui=tahoe] .tahoePaletteField{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:.5px solid var(--t-separator)}
+html[data-ui=tahoe] .tahoePaletteField .tahoeGlyph{width:20px;height:20px;color:var(--t-label-3)}
+html[data-ui=tahoe] .tahoePaletteField input{flex:1;border:0;background:transparent;font-size:17px;color:var(--t-label);outline:none;box-shadow:none;padding:2px 0}
+html[data-ui=tahoe] .tahoePaletteList{overflow:auto;padding:6px;flex:1}
+html[data-ui=tahoe] .tahoePaletteGroup{padding:10px 12px 4px;font-size:11px;font-weight:600;color:var(--t-label-3)}
+html[data-ui=tahoe] .tahoePaletteItem{display:flex;align-items:center;gap:11px;padding:8px 12px;border-radius:11px;cursor:default;font-size:13px}
+html[data-ui=tahoe] .tahoePaletteItem .tahoeGlyph{color:var(--t-label-2)}
+html[data-ui=tahoe] .tahoePaletteItem .t{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+html[data-ui=tahoe] .tahoePaletteItem small{color:var(--t-label-3);font-size:11.5px;white-space:nowrap}
+html[data-ui=tahoe] .tahoePaletteItem[aria-selected=true]{background:var(--t-accent);color:#fff}
+html[data-ui=tahoe] .tahoePaletteItem[aria-selected=true] :is(.tahoeGlyph,small){color:rgba(255,255,255,.85)}
+html[data-ui=tahoe] .tahoePaletteItem[aria-selected=true] kbd{background:rgba(255,255,255,.22);color:#fff}
+html[data-ui=tahoe] .tahoePaletteEmpty{padding:36px;text-align:center;color:var(--t-label-3)}
+html[data-ui=tahoe] .tahoePalette footer{display:flex;gap:16px;padding:9px 16px;border-top:.5px solid var(--t-separator);font-size:11px;color:var(--t-label-3)}
+html[data-ui=tahoe] .tahoePalette footer kbd{margin-right:2px;padding:2px 5px}
+
+/* Context menu */
+html[data-ui=tahoe] .tahoeMenu{position:fixed;inset:auto;margin:0;min-width:220px;padding:5px;border:0;border-radius:14px;background:var(--t-glass-strong);backdrop-filter:var(--t-blur);color:var(--t-label);box-shadow:var(--t-shadow-float),inset 0 .5px 0 var(--t-glass-edge)}
+html[data-ui=tahoe] .tahoeMenu:popover-open{display:flex;flex-direction:column;animation:tahoePop .14s var(--t-ease)}
+html[data-ui=tahoe] .tahoeMenu button{display:flex;align-items:center;gap:9px;width:100%;padding:5px 10px;border:0;border-radius:8px;background:transparent;color:inherit;font:inherit;font-size:13px;text-align:left}
+html[data-ui=tahoe] .tahoeMenu button span{flex:1}
+html[data-ui=tahoe] .tahoeMenu button .tahoeGlyph{width:15px;height:15px;color:var(--t-label-2)}
+html[data-ui=tahoe] .tahoeMenu button:is(:hover,:focus-visible):not(:disabled){background:var(--t-accent);color:#fff;outline:0}
+html[data-ui=tahoe] .tahoeMenu button:is(:hover,:focus-visible):not(:disabled) .tahoeGlyph{color:#fff}
+html[data-ui=tahoe] .tahoeMenu button.danger{color:#ff3b30}
+html[data-ui=tahoe] .tahoeMenu button:disabled{opacity:.4}
+html[data-ui=tahoe] .tahoeMenu hr{border:0;height:.5px;background:var(--t-separator);margin:4px 10px}
+@keyframes tahoePop{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:none}}
+
+html[data-ui=tahoe] .macPlayerUtilities input[type=range]{display:block!important;width:116px!important;min-width:90px;height:20px}
+html[data-ui=tahoe] .macTransportRow{flex-wrap:wrap;row-gap:6px}
+html[data-ui=tahoe] .hoverPreviewOption{display:flex;align-items:center;gap:5px;white-space:nowrap;font-size:12px;color:var(--muted);padding:5px 8px;border-radius:7px;background:var(--surface-input)}
+html[data-ui=tahoe][data-hover-preview=false] .shotPreviewLine{display:none}
+html[data-ui=tahoe] .screenshotDirectory,html[data-ui=tahoe] .lastScreenshot{overflow-wrap:anywhere;user-select:text}
+html[data-ui=tahoe] .detectionOverlay{position:absolute;top:14px;left:14px;right:14px;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 12px;background:#17191fee;color:white;border-radius:12px;z-index:8}
+html[data-ui=tahoe] .detectionOverlay .btn{background:#fff;color:#222;flex:none}
+html[data-ui=tahoe] .previewWrap.detectingVideo{box-shadow:inset 0 0 0 2px #55b8ff,0 0 18px #229bff88;animation:detectionGlow 1.4s ease-in-out infinite}
+@keyframes detectionGlow{50%{box-shadow:inset 0 0 0 2px #9ddaff,0 0 28px #229bffcc}}
+@media(prefers-reduced-motion:reduce){html[data-ui=tahoe] .previewWrap.detectingVideo{animation:none}}
+/* Scrollbars: overlay-style */
+html[data-ui=tahoe] ::-webkit-scrollbar{width:11px;height:11px}
+html[data-ui=tahoe] ::-webkit-scrollbar-track{background:transparent}
+html[data-ui=tahoe] ::-webkit-scrollbar-thumb{border:3px solid transparent;border-radius:8px;background:color-mix(in srgb,var(--t-label) 22%,transparent) padding-box}
+html[data-ui=tahoe] ::-webkit-scrollbar-thumb:hover{background:color-mix(in srgb,var(--t-label) 40%,transparent) padding-box}
+
+@media(max-width:1050px){html[data-ui=tahoe] .macDocumentTitle .macSaveState{display:none}}
+@media(max-width:900px){html[data-ui=tahoe] .macPlayback{gap:0;padding:2px}html[data-ui=tahoe] :is(.macPlayback,.macPlayerUtilities) .btn{width:26px;min-width:26px;height:26px;min-height:26px}html[data-ui=tahoe] .macPlayback .macMainPlay{width:32px;min-width:32px;height:32px}html[data-ui=tahoe] .macTransportRow{flex-wrap:wrap;row-gap:4px}html[data-ui=tahoe] .macPlayerUtilities input[type=range]{width:56px}}
+@media(max-width:1100px){html[data-ui=tahoe] .tahoeSearchField span{display:none}html[data-ui=tahoe] .tahoeSearchField{width:auto}}
+@media(max-width:760px){html[data-ui=tahoe] .editorTopbar{height:auto;-webkit-app-region:no-drag}html[data-ui=tahoe] .tahoeSearchField kbd{display:none}}
+@media(prefers-reduced-motion:reduce){html[data-ui=tahoe] *{transition:none!important;animation:none!important}}
+@media(prefers-reduced-transparency:reduce){html[data-ui=tahoe]{--t-glass:var(--t-surface);--t-glass-strong:var(--t-surface)}}

@@ -1,6 +1,6 @@
 /* Covers are small embedded JPEGs in project metadata, never external file paths. */
 (()=>{
-const camera='<svg class="workbenchIcon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h5l2-3h4l2 3h5v14H3Z"/><circle cx="12" cy="13" r="4"/></svg>';
+const camera='<svg class="workbenchIcon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="8" cy="9" r="1.5"/><path d="m4 18 5-5 3 3 4-5 5 6"/></svg>';
 const input=document.createElement('input');input.type='file';input.accept='image/png,image/jpeg,image/webp';input.hidden=true;document.body.append(input);let targetId='';
 function decorate(){for(const entry of document.querySelectorAll('.projectEntry')){
   const button=entry.querySelector('.projectItem');if(!button)continue;

@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3a3d45"/>
+      <stop offset=".55" stop-color="#1d1f24"/>
+      <stop offset="1" stop-color="#0e0f12"/>
+    </linearGradient>
+    <radialGradient id="glow" cx=".5" cy=".18" r=".75">
+      <stop offset="0" stop-color="#ffffff" stop-opacity=".16"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="glass" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity=".96"/>
+      <stop offset=".5" stop-color="#e9ebf0" stop-opacity=".86"/>
+      <stop offset="1" stop-color="#c9ccd4" stop-opacity=".78"/>
+    </linearGradient>
+    <linearGradient id="rim" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity=".9"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity=".1"/>
+    </linearGradient>
+    <linearGradient id="cut" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#4fb3ff"/>
+      <stop offset=".55" stop-color="#0a7cff"/>
+      <stop offset="1" stop-color="#ff7a45"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="150%">
+      <feDropShadow dx="0" dy="18" stdDeviation="22" flood-color="#000" flood-opacity=".45"/>
+    </filter>
+    <filter id="iconShadow" x="-10%" y="-10%" width="120%" height="125%">
+      <feDropShadow dx="0" dy="10" stdDeviation="14" flood-color="#000" flood-opacity=".28"/>
+    </filter>
+    <mask id="holes">
+      <rect width="1024" height="1024" fill="#fff"/>
+      <g fill="#000">
+        <rect x="333" y="300" width="40" height="52" rx="12"/><rect x="333" y="400" width="40" height="52" rx="12"/>
+        <rect x="333" y="500" width="40" height="52" rx="12"/><rect x="333" y="600" width="40" height="52" rx="12"/>
+        <rect x="333" y="700" width="40" height="52" rx="12"/>
+        <rect x="452" y="262" width="52" height="40" rx="12"/><rect x="552" y="262" width="52" height="40" rx="12"/>
+        <rect x="652" y="262" width="52" height="40" rx="12"/>
+        <rect x="452" y="482" width="52" height="40" rx="12"/><rect x="552" y="482" width="52" height="40" rx="12"/>
+      </g>
+    </mask>
+    <clipPath id="sq"><path d="M512 100c236 0 286 0 349 63s63 113 63 349 0 286-63 349-113 63-349 63-286 0-349-63-63-113-63-349 0-286 63-349 113-63 349-63Z"/></clipPath>
+  </defs>
+  <g filter="url(#iconShadow)">
+    <path d="M512 100c236 0 286 0 349 63s63 113 63 349 0 286-63 349-113 63-349 63-286 0-349-63-63-113-63-349 0-286 63-349 113-63 349-63Z" fill="url(#bg)"/>
+  </g>
+  <g clip-path="url(#sq)">
+    <rect width="1024" height="1024" fill="url(#glow)"/>
+    <g filter="url(#shadow)" mask="url(#holes)">
+      <path d="M300 300a72 72 0 0 1 72-72h360a44 44 0 0 1 0 88H408v122h232a44 44 0 0 1 0 88H408v226a54 54 0 0 1-108 0Z" fill="url(#glass)"/>
+    </g>
+    <path d="M300 300a72 72 0 0 1 72-72h360a44 44 0 0 1 0 88H408v122h232a44 44 0 0 1 0 88H408v226a54 54 0 0 1-108 0Z" fill="none" stroke="url(#rim)" stroke-width="3" mask="url(#holes)"/>
+    <path d="M560 812 790 382" stroke="url(#cut)" stroke-width="30" stroke-linecap="round"/>
+    <circle cx="790" cy="382" r="30" fill="#fff" opacity=".95"/>
+  </g>
+</svg>
