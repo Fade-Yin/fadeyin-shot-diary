@@ -11,7 +11,7 @@
     "build:win": "electron-builder --win portable",
     "build:win-installer": "electron-builder --win nsis",
     "build:mac": "electron-builder --mac dmg zip",
-    "build:mac:x64": "electron-builder --mac dmg zip --x64",
+    "build:mac:x64": "electron-builder --config mac-x64-builder.cjs --mac dmg zip --x64",
     "build:mac:arm64": "electron-builder --mac dmg zip --arm64"
   },
   "devDependencies": {
