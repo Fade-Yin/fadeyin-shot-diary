@@ -1,0 +1,73 @@
+name: Build signed Mac ARM64 0.9.4
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  mac:
+    runs-on: macos-15
+    timeout-minutes: 45
+    defaults:
+      run:
+        working-directory: desktop
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: desktop/package-lock.json
+      - run: npm ci
+      - name: Native ARM64 FFprobe
+        run: |
+          mkdir -p node_modules/ffprobe-static/bin/darwin/arm64
+          curl --fail --location --retry 3 https://github.com/eugeneware/ffmpeg-static/releases/download/b6.0/ffprobe-darwin-arm64 -o node_modules/ffprobe-static/bin/darwin/arm64/ffprobe
+          chmod +x node_modules/ffprobe-static/bin/darwin/arm64/ffprobe
+      - name: Regression checks
+        run: |
+          npm run check
+          node scripts/test-continuous-094.cjs
+          node scripts/test-follow-shot-094.cjs
+          node scripts/test-hover-093.cjs
+          node scripts/test-mac-menu-093.cjs
+          node scripts/test-screenshot-store-092.cjs
+          node scripts/test-hardening.cjs
+          node scripts/test-project-fields.cjs
+          node scripts/test-timeline-notes.cjs
+      - name: Prepare temporary Apple API key
+        env:
+          APPLE_API_KEY_DATA: ${{ secrets.APPLE_API_KEY }}
+        run: node scripts/prepare-notary-key.cjs
+      - name: Build Developer ID signed and notarized app
+        env:
+          CSC_LINK: ${{ secrets.CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+          APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
+          APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+        run: npx electron-builder --mac dmg zip --arm64 --publish never -c.forceCodeSigning=true
+      - name: Verify ARM64 architecture and Apple trust
+        env:
+          EXPECTED_ARCH: arm64
+        run: |
+          node scripts/check-mac.cjs
+          codesign --verify --deep --strict --verbose=2 dist/mac-arm64/片拉拉.app
+          codesign -dv --verbose=2 dist/mac-arm64/片拉拉.app 2>&1 | grep 'Authority=Developer ID Application'
+          xcrun stapler validate dist/mac-arm64/片拉拉.app
+          spctl --assess --type execute --verbose=2 dist/mac-arm64/片拉拉.app
+          shasum -a 256 dist/*.dmg dist/*.zip > dist/SHA256-arm64.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Pianlala-macOS-arm64-0.9.4
+          path: |
+            desktop/dist/*.dmg
+            desktop/dist/*.zip
+            desktop/dist/SHA256-arm64.txt
+          retention-days: 30
+
+      - name: Attach verified installers and publish 0.9.4
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view v0.9.4 --repo Fade-Yin/fadeyin-shot-diary --json isDraft --jq .isDraft | grep true
+          gh release upload v0.9.4 dist/*.dmg dist/*.zip dist/SHA256-arm64.txt --repo Fade-Yin/fadeyin-shot-diary
+          gh release edit v0.9.4 --draft=false --latest --repo Fade-Yin/fadeyin-shot-diary

@@ -1,19 +1,21 @@
 # 片拉拉 · Pianlala
 
-## 当前版本 0.9.3（2026-10-16）
+## 当前版本 0.9.4（2026-10-16）
 
 源码已采用 [MIT](LICENSE)，第三方组件保持原有许可，见 [第三方声明](THIRD_PARTY_NOTICES.md)。开发者：B站 Fadeyin。
 
 ## 下载最新版
 
-| 平台 | 0.9.3 安装包 |
+| 平台 | 0.9.4 安装包 |
 | --- | --- |
-| Mac · Apple Silicon（M1 及更新芯片，macOS 12+） | [下载 DMG](https://github.com/Fade-Yin/fadeyin-shot-diary/releases/download/v0.9.3/Pianlala-macOS-arm64-0.9.3.dmg) · [下载 ZIP](https://github.com/Fade-Yin/fadeyin-shot-diary/releases/download/v0.9.3/Pianlala-macOS-arm64-0.9.3.zip) |
-| Windows · x64 | [下载便携版 EXE](https://github.com/Fade-Yin/fadeyin-shot-diary/releases/download/v0.9.3/Pianlala-Windows-Portable-0.9.3.exe) |
+| Mac · Apple Silicon（M1 及更新芯片，macOS 12+） | [下载 DMG](https://github.com/Fade-Yin/fadeyin-shot-diary/releases/download/v0.9.4/Pianlala-macOS-arm64-0.9.4.dmg) · [下载 ZIP](https://github.com/Fade-Yin/fadeyin-shot-diary/releases/download/v0.9.4/Pianlala-macOS-arm64-0.9.4.zip) |
+| Windows · x64 | [下载便携版 EXE](https://github.com/Fade-Yin/fadeyin-shot-diary/releases/download/v0.9.4/Pianlala-Windows-Portable-0.9.4.exe) |
 
 [最新发布页与校验文件](https://github.com/Fade-Yin/fadeyin-shot-diary/releases/latest)
 
-Mac 0.9.3 已通过 Developer ID 签名、Apple 公证、公证票据（staple）及 Gatekeeper 检查，见 [构建与验证记录](https://github.com/Fade-Yin/fadeyin-shot-diary/actions/runs/38775210402)。完整 Mac 真机界面交互验收尚未完成。当前 Mac 安装包为 arm64，不适用于 Intel Mac。
+Mac 发布流程强制验证 Developer ID 签名、Apple 公证、公证票据（staple）及 Gatekeeper；只有通过检查才公开发布，见 [0.9.4 构建与验证记录](https://github.com/Fade-Yin/fadeyin-shot-diary/actions/workflows/mac-arm64-094.yml)。完整 Mac 真机界面交互验收尚未完成。当前 Mac 安装包为 arm64，不适用于 Intel Mac。
+
+0.9.4 取消分析和拉片模式的分页，全部镜头连续滚动显示；两个模式均支持拖动播放器时间轴后自动定位并高亮镜头，保留序列筛选且不触发播放。
 
 ## 简介
 
@@ -21,7 +23,7 @@ Mac 0.9.3 已通过 Developer ID 签名、Apple 公证、公证票据（staple�
 
 Node.js 22：在 `desktop` 下运行 `npm ci`、`npm start`。
 Windows 打包运行 `npm run build:win`；Apple Silicon Mac 运行 `npm run build:mac:arm64`。
-Actions 的 Build signed Mac ARM64 0.9.3 工作流提供 macOS 原生构建、回归测试、签名与公证检查。
+Actions 的 Build signed Mac ARM64 0.9.4 工作流提供 macOS 原生构建、回归测试、签名与公证检查。
 
 面向电影学习与逐镜分析的本地拉片工具。导入视频，检测镜头切点，浏览中间帧，按场次整理并填写拉片笔记。
 

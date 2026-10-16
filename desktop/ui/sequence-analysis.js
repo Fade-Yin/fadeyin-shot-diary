@@ -80,13 +80,13 @@ renderAnalysisRows=function(){
   const rows=$('#rows');rows.replaceChildren();if(appMode!=='analysis')return;
   const sequence=activeScene();
   const indexes=shots.map((_,i)=>i).filter(i=>sequence?i>=sequence.startShot&&i<sequence.endShot:activeSceneId==='unassigned'?!scenes.some(s=>i>=s.startShot&&i<s.endShot):true);
-  analysisPage=Math.min(analysisPage,Math.max(0,Math.ceil(indexes.length/60)-1));
-  for(const i of indexes.slice(analysisPage*60,(analysisPage+1)*60)){
+  analysisPage=0;
+  for(const i of indexes){
     const s=shots[i],row=document.createElement('div');row.className='shotRow';
     row.innerHTML=`<div class="shotNum"><b>镜头 ${String(i+1).padStart(2,'0')}</b><small>${(s.end-s.start).toFixed(2)} 秒</small></div><img class="thumb" loading="lazy" decoding="async" src="${s.image}" alt="镜头 ${i+1} 中间帧"><div class="time"><b>${fmt(s.start)} → ${fmt(s.end)}</b><small>中间帧 ${fmt(s.mid)}</small></div><div class="rowBtns"><button class="btn" data-play="${i}">播放</button><button class="btn danger" data-cut="${i}">合并前一镜头</button></div>`;
     rows.append(row);
   }
-  renderPager('analysis',indexes.length,60,analysisPage);$('#resultCount').textContent=`${sequence?sequence.title+' · ':''}${indexes.length} 个镜头`;
+  $('#resultCount').textContent=`${sequence?sequence.title+' · ':''}${indexes.length} 个镜头`;
 };
 const oldRestoreEdit=restoreEdit;
 restoreEdit=function(snapshot){closeForm();oldRestoreEdit(snapshot);renderOverviewCurve()};

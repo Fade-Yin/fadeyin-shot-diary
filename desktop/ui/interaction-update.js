@@ -13,7 +13,20 @@ function openChoices(input){if(busy)return;choiceInput=input;input.removeAttribu
 $('#lapBody').addEventListener('click',e=>{const input=e.target.closest('.lapChoice');if(input)openChoices(input)});
 window.PianlalaOpenChoices=openChoices;
 $('#lapBody').addEventListener('keydown',e=>{const input=e.target.closest('.lapChoice');if(input&&e.key==='ArrowDown'){e.preventDefault();openChoices(input);choices.querySelector('button')?.focus()}});
-video.addEventListener('seeked',()=>{if(appMode!=='lap'||busy||videoLoading||!shots.length)return;const i=shots.findIndex(s=>video.currentTime>=s.start&&video.currentTime<s.end);if(i<0)return;document.querySelectorAll('.lapCurrentShot').forEach(r=>r.classList.remove('lapCurrentShot'));const s=activeScene();if(s&&(i<s.startShot||i>=s.endShot)||activeSceneId==='unassigned'&&scenes.some(x=>i>=x.startShot&&i<x.endShot))return;let target=document.querySelector(`[data-lap-play="${i}"]`);if(!target){if(document.activeElement?.closest('#lapBody'))return;const indexes=shots.map((_,j)=>j).filter(j=>s?j>=s.startShot&&j<s.endShot:activeSceneId==='unassigned'?!scenes.some(x=>j>=x.startShot&&j<x.endShot):true);lapPage=Math.floor(indexes.indexOf(i)/40);renderLapTable();target=document.querySelector(`[data-lap-play="${i}"]`)}if(target){target.closest('tr').classList.add('lapCurrentShot');if(!document.activeElement?.closest('#lapBody'))target.closest('tr').scrollIntoView({block:'nearest',inline:'nearest'})}});
+function followFocusedShot(){
+  if(!['lap','analysis'].includes(appMode)||busy||videoLoading||!shots.length)return;
+  const i=shots.findIndex((s,n)=>video.currentTime>=s.start&&(video.currentTime<s.end||n===shots.length-1&&video.currentTime===s.end));
+  document.querySelectorAll('.lapCurrentShot,.analysisCurrentShot').forEach(r=>r.classList.remove('lapCurrentShot','analysisCurrentShot'));
+  if(i<0)return;
+  const s=activeScene();
+  if(s&&(i<s.startShot||i>=s.endShot)||activeSceneId==='unassigned'&&scenes.some(x=>i>=x.startShot&&i<x.endShot))return;
+  const lap=appMode==='lap',editing=!!document.activeElement?.closest('#lapBody'),selector=lap?`[data-lap-play="${i}"]`:`[data-play="${i}"]`;
+  let target=document.querySelector(selector);
+  if(!target){if(editing)return;(lap?renderLapTable:renderAnalysisRows)();target=document.querySelector(selector)}
+  const row=target?.closest(lap?'tr':'.shotRow');
+  if(row){row.classList.add(lap?'lapCurrentShot':'analysisCurrentShot');if(!editing)row.scrollIntoView({block:'nearest',inline:'nearest'})}
+}
+video.addEventListener('seeked',followFocusedShot);
 
 // One transport cancellation path for all timeline pointer operations.
 for(const surface of [$('#timeline'),tracks].filter(Boolean))surface.addEventListener('pointerdown',()=>{if(!busy)window.pianlalaStopTransport?.()},true);
