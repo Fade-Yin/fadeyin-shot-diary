@@ -9,15 +9,20 @@
 | 平台 | 0.9.4 安装包 |
 | --- | --- |
 | Mac · Apple Silicon（M1 及更新芯片，macOS 12+） | [下载 DMG](https://github.com/Fade-Yin/fadeyin-shot-diary/releases/download/v0.9.4/Pianlala-macOS-arm64-0.9.4.dmg) · [下载 ZIP](https://github.com/Fade-Yin/fadeyin-shot-diary/releases/download/v0.9.4/Pianlala-macOS-arm64-0.9.4.zip) |
+| Mac · Intel（x64，macOS 12+）· **未测试** | [下载 DMG](https://github.com/Fade-Yin/fadeyin-shot-diary/releases/download/v0.9.4/Pianlala-macOS-x64-0.9.4.dmg) · [下载 ZIP](https://github.com/Fade-Yin/fadeyin-shot-diary/releases/download/v0.9.4/Pianlala-macOS-x64-0.9.4.zip) |
 | Windows · x64 | [下载便携版 EXE](https://github.com/Fade-Yin/fadeyin-shot-diary/releases/download/v0.9.4/Pianlala-Windows-Portable-0.9.4.exe) |
 
 [最新发布页与校验文件](https://github.com/Fade-Yin/fadeyin-shot-diary/releases/latest)
 
-Mac 发布流程强制验证 Developer ID 签名、Apple 公证、公证票据（staple）及 Gatekeeper；只有通过检查才公开发布，见 [0.9.4 构建与验证记录](https://github.com/Fade-Yin/fadeyin-shot-diary/actions/workflows/mac-arm64-094.yml)。完整 Mac 真机界面交互验收尚未完成。当前 Mac 安装包为 arm64，不适用于 Intel Mac。
+Mac 发布流程强制验证 Developer ID 签名、Apple 公证、公证票据（staple）及 Gatekeeper；只有通过检查才公开发布，见 [0.9.4 构建与验证记录](https://github.com/Fade-Yin/fadeyin-shot-diary/actions/workflows/mac-arm64-094.yml)。完整 Mac 真机界面交互验收尚未完成。Apple Silicon 安装包为 arm64；Intel 安装包为 x64，未完成 Intel 真机测试。
 
 0.9.4 取消分析和拉片模式的分页，全部镜头连续滚动显示；两个模式均支持拖动播放器时间轴后自动定位并高亮镜头，保留序列筛选且不触发播放。
 
 ## 简介
+
+### Mac Intel 版说明
+
+**Intel（x64）版未测试：未经 Intel Mac 真机界面及完整操作流程测试。** 安装包通过 Intel 构建机的自动回归、架构与媒体工具检查，以及签名、公证、Gatekeeper 验证后，追加至 [0.9.4 发布页](https://github.com/Fade-Yin/fadeyin-shot-diary/releases/tag/v0.9.4)。自动检查不等同于完整真机验收。Intel Mac 请选择 x64；M 系列芯片请选择 arm64。
 
 新版包含系统跟随的浅深色 UI、镜头悬停播放与离开暂停、时间线当前镜头拉片面板、项目独立的自定义字段，以及静帧、镜头 MP4、CSV、拉片日记导出。Mac 版补充原生菜单栏、标准 Command 快捷键与窗口外观联动。
 
@@ -48,7 +53,7 @@ Actions 的 Build signed Mac ARM64 0.9.4 工作流提供 macOS 原生构建、�
 
 ### Mac 桌面版
 
-使用上方 Mac DMG，打开后将「片拉拉」拖入「应用程序」。也可下载 ZIP 并解压应用。请选择与设备匹配的 Apple Silicon arm64 版本。
+使用上方 Mac DMG，打开后将「片拉拉」拖入「应用程序」。也可下载 ZIP 并解压应用。M 系列芯片请选择 arm64，Intel 芯片请选择 x64；Intel 版未经真机使用测试。
 
 仓库的「Download ZIP」是桌面版源码，不是网页版本，也不是可执行程序。界面文件仅作为 Electron 应用内部资源随 EXE 打包，不提供单独的 HTML 使用方式。
 
